@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Advance Flow – Mortgage Application Entry</title>
+<style>
+/* Visual language follows the Staff Mortgage LOS prototype: charcoal rail, white work surface,
+   orange reserved for what needs action. */
+:root{
+  --orange:#F26A1B;--orange-strong:#D95400;--orange-ink:#A04000;--orange-tint:#FDEEE3;--orange-line:#F6B48A;
+  --ink:#2B2927;--g700:#55514E;--g500:#7B7672;--g400:#A6A19D;--g300:#D2CECA;--g200:#E6E3E0;--g100:#F1EFED;--g50:#F8F7F6;--white:#fff;
+  --side:#3B3836;--side-2:#4B4744;--side-fg:#E9E6E3;--ok:#2F7D4F;--ok-tint:#E8F4EC;--err:#B3261E;--err-tint:#FCECEA;
+  --display:'Archivo','Arial Narrow',Arial,sans-serif;--body:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;--r:6px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--white);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+h1{font-size:24px;line-height:1.15}h2{font-size:16px}h3{font-size:14px}
+p{margin:0}a{color:var(--orange-ink)}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.muted{color:var(--g500)}.small{font-size:12.5px}.num{font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+
+.shell{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100%}
+.side{background:var(--side);color:var(--side-fg)}
+.side-in{position:sticky;top:0;padding:18px 14px;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;gap:10px;align-items:center;padding:0 6px}
+.brand-mark{width:30px;height:30px;border-radius:6px 6px 14px 6px;background:var(--orange);display:grid;place-items:center;color:#fff;font-family:var(--display);font-weight:700}
+.brand b{font-family:var(--display);color:#fff;display:block;line-height:1.1}.brand span{font-size:11.5px;color:var(--g400)}
+#nav{display:flex;flex-direction:column;gap:2px}
+.nav-b{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;background:none;border:0;border-radius:var(--r);padding:9px 10px;color:var(--side-fg);cursor:pointer;font-weight:500}
+.nav-b:hover{background:var(--side-2)}.nav-b[aria-current="page"]{background:#fff;color:var(--ink)}
+.count{background:var(--orange);color:#fff;border-radius:10px;font-size:11.5px;font-weight:600;padding:0 7px;line-height:18px}
+.side-foot{font-size:11.5px;color:var(--g400);padding:0 6px}
+.work{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:10px 28px;border-bottom:1px solid var(--g200);position:sticky;top:0;background:#fff;z-index:5}
+.who{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.who label{font-size:12px;color:var(--g500);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.who select{border:1px solid var(--g300);border-radius:var(--r);padding:6px 8px;background:#fff;font-weight:600}
+.proto{font-size:12px;border:1px dashed var(--g400);color:var(--g700);border-radius:20px;padding:3px 10px}
+main{padding:24px 28px 56px;display:flex;flex-direction:column;gap:20px;max-width:1240px;width:100%}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+.head p{color:var(--g700);margin-top:4px;max-width:68ch}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.stack{display:flex;flex-direction:column;gap:14px;min-width:0}
+.grid2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:22px;align-items:start}
+
+.sec{display:flex;align-items:stretch;margin-bottom:14px}
+.sec h2{background:var(--g500);color:#fff;font-size:12.5px;letter-spacing:.07em;text-transform:uppercase;padding:6px 18px 6px 12px;border-radius:0 0 14px 0;white-space:nowrap}
+.sec::after{content:"";flex:1;border-top:1px solid var(--orange);min-width:12px}
+.sec .sec-x{order:3;padding-left:10px;font-size:12.5px;color:var(--g500);align-self:center;white-space:nowrap}
+.sub{font-family:var(--display);font-size:13px;font-weight:600;color:var(--g700);text-transform:uppercase;letter-spacing:.05em;grid-column:1/-1;border-bottom:1px solid var(--g200);padding-bottom:4px;margin-top:8px}
+
+.panel{border:1px solid var(--g200);border-radius:8px;background:#fff;padding:16px;min-width:0}
+.note{background:var(--g50);border-radius:var(--r);padding:10px 12px;color:var(--g700);font-size:13px}
+.need{background:var(--orange-tint);border:1px solid var(--orange-line);border-radius:8px;padding:14px}
+.okbox{background:var(--ok-tint);border:1px solid #B9DCC6;border-radius:8px;padding:14px}
+.errbox{background:var(--err-tint);border:1px solid #F0B8B3;border-radius:8px;padding:14px}
+.errbox ul{margin:6px 0 0;padding-left:18px}.errbox a{color:var(--err);font-weight:600;cursor:pointer}
+
+.btn{border:1px solid var(--g300);background:#fff;border-radius:var(--r);padding:7px 12px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.btn:hover{border-color:var(--g500)}.btn.pri{background:var(--orange-strong);border-color:var(--orange-strong);color:#fff}.btn.pri:hover{background:#C24B00}
+.btn.sm{padding:4px 9px;font-size:12.5px}.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{background:none;border:0;padding:0;color:var(--orange-ink);font-weight:600;cursor:pointer;text-decoration:underline}
+
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap;border:1px solid transparent;line-height:18px}
+.c-ok{background:var(--ok-tint);color:var(--ok);border-color:#B9DCC6}.c-soon{background:var(--orange-tint);border-color:var(--orange-line);color:var(--orange-ink)}
+.c-over{background:var(--orange-strong);color:#fff}.c-idle{color:var(--g500);border:1px dashed var(--g300);font-weight:500}
+.c-stage{background:var(--g700);color:#fff}.c-draft{background:var(--g100);color:var(--g700)}.c-ret{background:var(--err-tint);color:var(--err);border-color:#F0B8B3}
+
+.tw{overflow-x:auto;border:1px solid var(--g200);border-radius:8px}
+table.t{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px}
+.t th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--g500);padding:9px 12px;background:var(--g50);border-bottom:1px solid var(--g200);white-space:nowrap}
+.t td{padding:9px 12px;border-bottom:1px solid var(--g100);vertical-align:top}.t tr:last-child td{border-bottom:0}
+.t td.r,.t th.r{text-align:right}
+
+.steps{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px}
+.steps button{flex:1 0 auto;border:0;background:var(--g100);color:var(--g700);padding:8px 12px;font-weight:600;font-size:12.5px;cursor:pointer;border-radius:3px;white-space:nowrap;text-align:left;border-bottom:3px solid transparent}
+.steps button.done{border-bottom-color:var(--ok)}.steps button.part{border-bottom-color:var(--orange-line)}
+.steps button.on{background:var(--orange-strong);color:#fff}
+.steps small{display:block;font-weight:500;opacity:.85;font-size:11px}
+.bar{height:8px;background:var(--g200);border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:var(--orange);transition:width .25s}
+.progress-line{display:flex;align-items:center;gap:12px}.progress-line .bar{flex:1}
+
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
+.f{display:flex;flex-direction:column;gap:5px;min-width:0}.f.wide{grid-column:1/-1}
+.f label,.f .lab{font-weight:600;font-size:13px}.opt{font-weight:400;color:var(--g500)}.req{color:var(--orange-ink)}
+.f input,.f select,.f textarea{border:1px solid var(--g300);border-radius:var(--r);padding:8px 10px;background:#fff;width:100%}
+.f textarea{min-height:72px;resize:vertical}
+.f input[readonly]{background:var(--g50);color:var(--g700)}
+.hint{font-size:12px;color:var(--g500)}.err{font-size:12.5px;color:var(--err);font-weight:600}
+.f.bad input,.f.bad select,.f.bad textarea{border-color:var(--err);background:var(--err-tint)}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt-b{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--g300);border-radius:var(--r);padding:7px 12px;cursor:pointer;font-weight:500;font-size:13.5px}
+.opt-b input{width:auto;margin:0}.opt-b:has(input:checked){border-color:var(--orange-strong);background:var(--orange-tint)}
+fieldset{border:0;padding:0;margin:0;min-width:0}
+fieldset:disabled .opt-b{cursor:default}
+fieldset:disabled input,fieldset:disabled select,fieldset:disabled textarea{background:var(--g50)}
+
+.rep{grid-column:1/-1;display:flex;flex-direction:column;gap:8px}
+.rep-row{display:grid;gap:10px;align-items:start;border:1px solid var(--g200);border-radius:8px;padding:10px;background:var(--g50)}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;grid-column:1/-1}
+.calc>div{border:1px solid var(--g200);border-radius:8px;padding:10px 12px;background:var(--white)}
+.calc b{display:block;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}.calc span{font-size:12.5px;color:var(--g700)}
+.calc .warn b{color:var(--orange-ink)}
+
+.doc{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;border:1px solid var(--g200);border-radius:8px;padding:12px 14px}
+.doc.bad{border-color:var(--err);background:var(--err-tint)}
+.doc ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
+.doc li{display:flex;gap:8px;align-items:center;font-size:13px}
+
+.track{display:flex;flex-direction:column;gap:0;margin:0;padding:0;list-style:none}
+.track li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:0 0 14px;position:relative}
+.track li::before{content:"";position:absolute;left:13px;top:26px;bottom:0;width:2px;background:var(--g200)}
+.track li:last-child::before{display:none}.track li.done::before{background:var(--ok)}
+.track .dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:14px;background:var(--g100);color:var(--g500);border:2px solid var(--g200)}
+.track .done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+.track .cur .dot{background:var(--orange-tint);border-color:var(--orange-strong);color:var(--orange-ink)}
+.track .name{font-weight:600}.track .cur .name{color:var(--orange-ink)}.track .fut .name{color:var(--g500)}
+.rail{display:flex;gap:2px}.rail i{flex:1;height:8px;background:var(--g200);border-radius:1px}.rail i.d{background:var(--ok)}.rail i.c{background:var(--orange)}
+
+.kv{display:grid;grid-template-columns:minmax(120px,max-content) minmax(0,1fr);gap:6px 16px;margin:0}
+.kv dt{color:var(--g500);font-size:12.5px}.kv dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+.big{font-size:26px;font-weight:700;font-family:var(--display);font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;z-index:20;max-width:92vw;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.login{max-width:420px;margin:8vh auto;border:1px solid var(--g200);border-radius:10px;padding:26px;display:flex;flex-direction:column;gap:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.card{border:1px solid var(--g200);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px;background:#fff;text-align:left}
+.card.off{opacity:.55}.card.on{border-color:var(--orange-line);box-shadow:0 0 0 1px var(--orange-line)}
+.card h3{font-size:16px}
+
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr}.side-in{position:static;padding:12px}#nav{flex-direction:row;flex-wrap:wrap}.nav-b{width:auto}
+  .top{padding:10px 16px}main{padding:18px 16px 48px}.grid2{grid-template-columns:1fr}
+}
+@media (max-width:620px){.fgrid{grid-template-columns:1fr}.rep-row{grid-template-columns:1fr!important}.kv{grid-template-columns:1fr}.doc{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* =====================================================================================
+   Advance Flow – Mortgage Application Entry Module
+   Data is kept in localStorage (records) and IndexedDB (uploaded files) so the module
+   can be exercised end to end in a browser. `AdvanceFlow` is the integration seam:
+   in production its methods call the existing Advance Flow engine.
+   ===================================================================================== */
+
+/* ---------- configuration ---------- */
+const CONFIG={
+  rate:0.18,              // illustrative annual rate for the repayment estimate only
+  minEquityPct:20,        // paper form: down payment 20% minimum
+  maxTenureYears:30,
+  maxFileMB:10,
+  acceptedTypes:['application/pdf','image/jpeg','image/png'],
+  queue:'Mortgage Team Review Queue'
+};
+const STAGES=[
+  {n:'Application Submitted',u:'Applicant',sla:0},
+  {n:'Mortgage Team Review',u:'Mortgage Team',sla:3},
+  {n:'HR Review',u:'HR Team',sla:2},
+  {n:'Credit Assessment',u:'Credit Team',sla:5},
+  {n:'Approval',u:'Approval Authorities',sla:3},
+  {n:'Legal Review',u:'Legal Team',sla:5},
+  {n:'Disbursement',u:'Credit Administration',sla:3}];
+const ESCALATION=[
+  {level:1,after:0,to:'Responsible Officer',when:'SLA target missed'},
+  {level:2,after:2,to:'Unit Head',when:'2 business days overdue'},
+  {level:3,after:5,to:'Department Head',when:'5 business days overdue'}];
+const PROFILE={employeeNo:'E-04417',staffId:'S-04417',prefix:'Ms',first:'Ama',middle:'Serwaa',last:'Owusu',
+  email:'ama.owusu@example.com',dept:'Operations',branch:'Head Office',job:'Operations Manager'};
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>+String(v??'').replace(/,/g,'')||0;
+const cur=f=>f.currency||'GHS';
+const money=(n,c)=>(c||'GHS')+' '+Math.round(n).toLocaleString('en-GB');
+const pad=n=>String(n).padStart(2,'0');
+const fmtD=t=>t?new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
+const fmtDT=t=>t?new Date(t).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
+const uid=p=>p+'-'+Math.random().toString(36).slice(2,9).toUpperCase();
+function addBusinessDays(t,n){const d=new Date(t);while(n>0){d.setDate(d.getDate()+1);const w=d.getDay();if(w!==0&&w!==6)n--}return d.getTime()}
+function dur(ms){const neg=ms<0;ms=Math.abs(ms);const s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);
+  return(neg?'-':'')+(d?d+'d ':'')+pad(h)+'h '+pad(m)+'m '+pad(s%60)+'s'}
+let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4200)}
+
+/* ---------- persistence ---------- */
+const KEY='advanceflow.mortgage.v1';
+function blank(){return{seq:1000,auditSeq:0,session:null,apps:[],audit:[],notes:[]}}
+let DB;try{DB=JSON.parse(localStorage.getItem(KEY))||blank()}catch(_){DB=blank()}
+let saveT;
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(_){}
+  const s=$('#savestate');if(s)s.textContent='All changes saved · '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
+function persistSoon(){const s=$('#savestate');if(s)s.textContent='Saving…';clearTimeout(saveT);saveT=setTimeout(persist,450)}
+
+/* uploaded files live in IndexedDB so they survive reloads (with an in-memory fallback) */
+const FILES={mem:{},db:null,
+  open(){return this.p||(this.p=new Promise(res=>{try{const r=indexedDB.open('advanceflow-mortgage-files',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>{this.db=r.result;res()};r.onerror=()=>res()}catch(_){res()}}))},
+  async put(id,blob){this.mem[id]=blob;await this.open();if(!this.db)return;
+    await new Promise(r=>{const t=this.db.transaction('f','readwrite');t.objectStore('f').put(blob,id);t.oncomplete=t.onerror=()=>r()})},
+  async get(id){if(this.mem[id])return this.mem[id];await this.open();if(!this.db)return null;
+    return new Promise(r=>{const q=this.db.transaction('f').objectStore('f').get(id);q.onsuccess=()=>r(q.result||null);q.onerror=()=>r(null)})},
+  async del(id){delete this.mem[id];await this.open();if(!this.db)return;
+    await new Promise(r=>{const t=this.db.transaction('f','readwrite');t.objectStore('f').delete(id);t.oncomplete=t.onerror=()=>r()})}};
+
+/* ---------- audit + notifications ---------- */
+function audit(app,action,detail,actor){
+  DB.audit.push({n:++DB.auditSeq,t:Date.now(),caseId:app?app.id:'—',ref:app&&app.ref||'',actor:actor||roleName(),action,detail:detail||''});}
+function notify(app,to,channels,message){
+  const n={id:uid('NTF'),t:Date.now(),caseId:app.id,ref:app.ref,to,channels,message};DB.notes.push(n);
+  audit(app,'Notification sent',`To ${to==='applicant'?'applicant':'Mortgage Team'} via ${channels.join(', ')}: “${message}”`,'System');}
+const roleName=()=>DB.session?(DB.session.role==='applicant'?'Applicant ('+PROFILE.first+' '+PROFILE.last+')':'Mortgage Team'):'System';
+
+/* ---------- Advance Flow integration seam ---------- */
+const AdvanceFlow={
+  /* Called once, immediately after a successful submission. */
+  startWorkflow(app){
+    const now=Date.now();
+    const wf={instanceId:uid('WF'),definition:'Mortgage Workflow',queue:CONFIG.queue,startedAt:now,stage:1,paused:false,
+      stageEnteredAt:now,dueAt:addBusinessDays(now,STAGES[1].sla),assignee:null,
+      history:[{stage:0,enteredAt:app.submittedAt,doneAt:now},{stage:1,enteredAt:now,doneAt:null}],
+      timers:['Stage SLA timer','End-to-end timer','Escalation timer'],escalation:ESCALATION};
+    app.workflow=wf;
+    audit(app,'Workflow initiated',`Mortgage Workflow instance ${wf.instanceId} started for ${app.ref}`,'System');
+    audit(app,'Assigned to queue',`Assigned to ${wf.queue}; stakeholder tracking activated`,'System');
+    audit(app,'SLA tracking started',`${STAGES[1].n}: ${STAGES[1].sla} business days, due ${fmtDT(wf.dueAt)}`,'System');
+    audit(app,'Workflow timers started',wf.timers.join(', '),'System');
+    audit(app,'Routing and escalations activated',ESCALATION.map(e=>`L${e.level} ${e.to} (${e.when})`).join('; '),'System');
+    return wf},
+  moveTo(app,stage){
+    const wf=app.workflow,now=Date.now();const h=wf.history[wf.history.length-1];if(h)h.doneAt=now;
+    wf.stage=stage;wf.paused=false;wf.stageEnteredAt=now;wf.assignee=null;
+    if(stage<STAGES.length){wf.dueAt=addBusinessDays(now,STAGES[stage].sla);wf.history.push({stage,enteredAt:now,doneAt:null})}
+    else wf.dueAt=null}
+};
+
+/* ---------- form definition ---------- */
+const O=a=>a.map(x=>Array.isArray(x)?x:[x,x]);
+const YN=[['yes','Yes'],['no','No']];
+const TYPES=[['purchase','Home Purchase'],['equity','Home Equity'],['completion','Home Completion'],['improvement','Home Improvement']];
+const idPat=/^GHA-\d{9}-\d$/i, phonePat=/^\+?[\d ]{9,15}$/, mailPat=/^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const joint=f=>f.joint==='yes';
+
+const SECTIONS=[
+{id:'A',t:'Personal Information',fields:[
+  {k:'employee_no',l:'Employee number',req:1},
+  {k:'prefix',l:'Prefix',type:'select',opts:O(['Mr','Mrs','Ms','Dr','Other']),req:1},
+  {k:'first_name',l:'First name',req:1},{k:'middle_name',l:'Middle name'},{k:'last_name',l:'Last name',req:1},
+  {k:'full_name',l:'Full name',type:'computed',hint:'Built from the names above'},
+  {k:'dob',l:'Date of birth',type:'date',req:1,check:v=>{const a=(Date.now()-new Date(v))/31557600000;return a<18?'Applicant must be at least 18 years old':a>75?'Check the date of birth':''}},
+  {k:'sex',l:'Sex',type:'select',opts:[['M','Male'],['F','Female']],req:1},
+  {k:'national_id',l:'National ID number',req:1,hint:'Ghana Card format: GHA-123456789-0',pat:idPat,patMsg:'Use the format GHA-123456789-0'},
+  {k:'email',l:'Personal email',type:'email',req:1,pat:mailPat,patMsg:'Enter a full email address'},
+  {k:'mobile',l:'Mobile number',type:'tel',req:1,pat:phonePat,patMsg:'Enter 9 to 15 digits'},
+  {k:'tel_res',l:'Residential telephone',type:'tel',pat:phonePat,patMsg:'Enter 9 to 15 digits'},
+  {k:'resident',l:'Are you resident in Ghana?',type:'radio',opts:YN,req:1,re:1,hint:'A Power of Attorney is required if you are not resident'},
+  {k:'address',l:'Residential address',type:'textarea',req:1,wide:1},
+  {k:'years_at_address',l:'Years at this address',type:'number',req:1,re:1,min:0},
+  {k:'dependants',l:'Number of dependants',type:'number',min:0,re:1},
+  {k:'prev_address',l:'Previous address',type:'textarea',req:1,wide:1,show:f=>f.years_at_address!==''&&f.years_at_address!=null&&num(f.years_at_address)<1&&String(f.years_at_address).trim()!=='',hint:'Needed because you have lived at your current address for less than a year'},
+  {k:'dependant_ages',l:'Ages of dependants',show:f=>num(f.dependants)>0},
+  {k:'joint',l:'Are you applying with a co-borrower?',type:'radio',opts:[['no','Just me'],['yes','Me and a co-borrower']],req:1,re:1,wide:1},
+  {k:'_co',type:'sub',l:'Co-borrower',show:joint},
+  {k:'co_first',l:'Co-borrower first name',req:1,show:joint},{k:'co_last',l:'Co-borrower last name',req:1,show:joint},
+  {k:'co_dob',l:'Co-borrower date of birth',type:'date',req:1,show:joint},
+  {k:'co_rel',l:'Relationship to you',type:'select',opts:O(['Spouse','Sibling','Parent/Child','Other']),req:1,show:joint},
+  {k:'co_national_id',l:'Co-borrower National ID',req:1,show:joint,pat:idPat,patMsg:'Use the format GHA-123456789-0'},
+  {k:'co_phone',l:'Co-borrower cell phone',type:'tel',req:1,show:joint,pat:phonePat,patMsg:'Enter 9 to 15 digits'},
+  {k:'co_email',l:'Co-borrower email',type:'email',show:joint,pat:mailPat,patMsg:'Enter a full email address'},
+  {k:'co_occupation',l:'Co-borrower occupation',req:1,show:joint},{k:'co_employer',l:'Co-borrower employer',req:1,show:joint},
+  {k:'co_income',l:'Co-borrower net monthly income',type:'number',req:1,min:0,show:joint}]},
+
+{id:'B',t:'Employment Information',fields:[
+  {k:'staff_id',l:'Staff ID',req:1},{k:'dept',l:'Department',req:1},{k:'branch',l:'Branch',req:1},{k:'job',l:'Job title',req:1},
+  {k:'emp_type',l:'Employment type',type:'select',opts:O(['Permanent','Contract','Probation']),req:1},
+  {k:'emp_date',l:'Date of employment',type:'date',req:1,re:1,check:v=>new Date(v)>new Date()?'Date of employment cannot be in the future':''},
+  {k:'service_years',l:'Length of employment',type:'computed',hint:'Calculated from the date of employment'},
+  {k:'ssnit',l:'Social Security (SSNIT) number',req:1},
+  {k:'salary',l:'Current salary (gross, monthly)',type:'number',req:1,min:1},
+  {k:'allowances',l:'Commission and allowances (monthly)',type:'number',min:0},
+  {k:'other_income_desc',l:'Other income sources',type:'textarea',req:1,wide:1,hint:'Describe each source, or write “None”'},
+  {k:'other_income_amount',l:'Other income, monthly total',type:'number',min:0},
+  {k:'_prev',type:'sub',l:'Employment history',show:f=>f.service_years!==''&&f.service_years!=null&&f._svc<3},
+  {k:'prev_employer',l:'Previous employer or business',req:1,show:f=>f._svc<3&&f.emp_date},
+  {k:'prev_occupation',l:'Previous occupation',req:1,show:f=>f._svc<3&&f.emp_date},
+  {k:'prev_length',l:'Length of previous employment (years)',type:'number',min:0,req:1,show:f=>f._svc<3&&f.emp_date}]},
+
+{id:'C',t:'Mortgage Request Details',fields:[
+  {k:'mtg_type',l:'Type of mortgage requested',type:'radio',opts:TYPES,req:1,wide:1},
+  {k:'currency',l:'Currency',type:'select',opts:[['GHS','Cedi (GHS)'],['USD','US Dollar (USD)'],['EUR','Euro (EUR)']],req:1},
+  {k:'purpose',l:'Mortgage purpose',type:'textarea',req:1,wide:1,hint:'For example: purchase of a 3-bedroom house for owner occupation'},
+  {k:'property_type',l:'Property type',type:'select',opts:O(['Detached house','Semi-detached house','Townhouse','Apartment','Land and construction']),req:1},
+  {k:'property_location',l:'Property location',req:1,hint:'Town or area'},
+  {k:'property_value',l:'Property value (purchase price)',type:'number',req:1,min:1},
+  {k:'requested_amount',l:'Requested mortgage amount',type:'number',req:1,min:1},
+  {k:'equity_contribution',l:'Equity contribution (down payment)',type:'number',req:1,min:0,hint:'At least 20% of the property value'},
+  {k:'tenure_years',l:'Preferred mortgage tenure (years)',type:'number',req:1,min:1},
+  {k:'repayment_estimate',l:'Monthly repayment estimate',type:'computed',hint:'Illustration only, at an indicative '+(CONFIG.rate*100)+'% a year. The approved rate is set at offer.'},
+  {k:'_prior',type:'sub',l:'Existing mortgages and credit history'},
+  {k:'prior_mortgage',l:'Have you ever had or applied for a mortgage?',type:'radio',opts:YN,req:1,re:1},
+  {k:'refused_credit',l:'Have you ever been refused credit?',type:'radio',opts:YN,req:1},
+  {k:'use_equity',l:'Are you using available equity towards this purchase?',type:'radio',opts:YN,req:1},
+  {k:'ex_address',l:'Address of property mortgaged',req:1,wide:1,show:f=>f.prior_mortgage==='yes'},
+  {k:'ex_lender',l:'Name and address of first lender',req:1,show:f=>f.prior_mortgage==='yes'},
+  {k:'ex_date',l:'Date of purchase',type:'date',show:f=>f.prior_mortgage==='yes'},
+  {k:'ex_price',l:'Original price of house purchased',type:'number',min:0,show:f=>f.prior_mortgage==='yes'},
+  {k:'ex_balance',l:'Outstanding balance',type:'number',min:0,req:1,show:f=>f.prior_mortgage==='yes'},
+  {k:'ex_equity',l:'Equity existing on property',type:'number',min:0,show:f=>f.prior_mortgage==='yes'}]},
+
+{id:'D',t:'Affordability Information',fields:[
+  {k:'net_salary',l:'Monthly net salary',type:'number',req:1,min:1,hint:'Take-home pay after tax and social security'},
+  {k:'loans_has',l:'Do you have existing loans or credit facilities?',type:'radio',opts:YN,req:1,re:1,wide:1},
+  {k:'loans',type:'repeat',l:'Existing loans',show:f=>f.loans_has==='yes',reqRows:1,addLabel:'Add a loan',
+    cols:[{k:'lender',l:'Lender',req:1},{k:'balance',l:'Balance outstanding',type:'number'},{k:'monthly',l:'Monthly repayment',type:'number',req:1},{k:'expiry',l:'Expiry date',type:'date'}]},
+  {k:'rent_payment',l:'Current rent or mortgage payment (monthly)',type:'number',min:0},
+  {k:'maintenance',l:'Maintenance or alimony (monthly)',type:'number',min:0},
+  {k:'other_commit_amount',l:'Other financial commitments (monthly)',type:'number',min:0},
+  {k:'other_commit_desc',l:'Describe other commitments',show:f=>num(f.other_commit_amount)>0,req:1},
+  {k:'total_debt',l:'Total monthly debt obligations',type:'computed',hint:'Loan repayments + rent/mortgage + maintenance + other commitments'},
+  {k:'_bank',type:'sub',l:'Bank details'},
+  {k:'bank_name',l:'Name of bank',req:1},{k:'bank_branch',l:'Branch',req:1},
+  {k:'bank_account',l:'Account number',req:1,pat:/^\d{8,20}$/,patMsg:'Enter 8 to 20 digits'},
+  {k:'bank_years',l:'How long has the account been at this bank (years)?',type:'number',min:0,req:1},
+  {k:'_assets',type:'sub',l:'Assets, liabilities and insurance (optional)'},
+  {k:'assets',type:'repeat',l:'Assets',addLabel:'Add an asset',cols:[{k:'type',l:'Type of asset',req:1},{k:'value',l:'Value',type:'number',req:1}]},
+  {k:'liabilities',type:'repeat',l:'Liabilities',addLabel:'Add a liability',cols:[{k:'type',l:'Type of liability',req:1},{k:'value',l:'Value',type:'number',req:1}]},
+  {k:'insurance',type:'repeat',l:'Life insurance policies',addLabel:'Add a policy',
+    cols:[{k:'company',l:'Insurance company',req:1},{k:'type',l:'Type'},{k:'policy',l:'Policy number',req:1},{k:'sum',l:'Sum assured',type:'number'},{k:'maturity',l:'Maturity date',type:'date'}]}]},
+
+{id:'E',t:'Vendor Information',fields:[
+  {k:'vendor_name',l:'Vendor name',req:1},{k:'vendor_contact',l:'Vendor contact person',req:1},
+  {k:'vendor_email',l:'Vendor email',type:'email',req:1,pat:mailPat,patMsg:'Enter a full email address'},
+  {k:'vendor_phone',l:'Vendor phone number',type:'tel',req:1,pat:phonePat,patMsg:'Enter 9 to 15 digits'},
+  {k:'vendor_address',l:'Vendor address',type:'textarea',wide:1}]},
+
+{id:'F',t:'Property Information',fields:[
+  {k:'prop_address',l:'Property address',type:'textarea',req:1,wide:1},
+  {k:'prop_description',l:'Property description',type:'textarea',req:1,wide:1,hint:'Size, number of rooms, finishes, plot details'},
+  {k:'developer',l:'Developer / vendor',req:1},
+  {k:'prop_status',l:'Property status',type:'select',opts:[['completed','Completed'],['construction','Under construction'],['offplan','Off-plan']],req:1,re:1},
+  {k:'land_tenure',l:'The property is',type:'radio',opts:[['Freehold','Freehold'],['Leasehold','Leasehold']],req:1},
+  {k:'prop_age',l:'Age of property (years)',type:'number',min:0,req:1,show:f=>f.prop_status==='completed'},
+  {k:'house_type',l:'House type',type:'select',opts:O(['2-bedroom','3-bedroom','4-bedroom','Other']),req:1,re:1},
+  {k:'house_other',l:'Describe the house type',req:1,show:f=>f.house_type==='Other'},
+  {k:'unoccupied',l:'Will it be left unoccupied for more than 1 month continuously in any year?',type:'radio',opts:YN,req:1,wide:1},
+  {k:'unocc_details',l:'Details',type:'textarea',req:1,wide:1,show:f=>f.unoccupied==='yes'}]},
+
+{id:'G',t:'Document Upload',custom:'docs',fields:[]},
+{id:'H',t:'References and Declaration',custom:'decl',fields:[]}
+];
+
+const DOCS=[
+  {k:'national_id',n:'National ID',req:1,d:'Ghana Card, front and back'},
+  {k:'employment_letter',n:'Employment Letter',req:1,d:'Confirms your position and employment type'},
+  {k:'payslips',n:'Payslips',req:1,d:'Most recent three months'},
+  {k:'bank_statements',n:'Bank Statements',req:1,d:'Most recent six months'},
+  {k:'employer_cert',n:'Employer’s Certification of Income',req:1,d:'Completed and stamped by the employer'},
+  {k:'passport_photos',n:'Passport Pictures',req:1,d:'Recent photograph of each borrower'},
+  {k:'offer_letter',n:'Property Offer Letter',req:1,d:'From the vendor or developer'},
+  {k:'property_docs',n:'Property Documentation',req:1,d:'Site plan, title or lease, building permit as available'},
+  {k:'poa',n:'Power of Attorney',req:1,show:f=>f.resident==='no',d:'Required because you are not resident in Ghana'},
+  {k:'insurance_docs',n:'Insurance',d:'Optional now; needed before disbursement'},
+  {k:'additional',n:'Any Additional Supporting Documents',d:'Optional'}];
+const REF_KINDS=['Relative','Relative','Relative','Friend','Friend'];
+
+/* ---------- derived values ---------- */
+function derive(f){
+  f.full_name=[f.prefix,f.first_name,f.middle_name,f.last_name].filter(Boolean).join(' ').replace(/^(\S+) /,(m,p)=>p+' ');
+  f._svc=f.emp_date?Math.max(0,(Date.now()-new Date(f.emp_date))/31557600000):99;
+  f.service_years=f.emp_date?f._svc.toFixed(1)+' years':'';
+  const loan=num(f.requested_amount),yrs=num(f.tenure_years),r=CONFIG.rate/12,m=yrs*12;
+  f._pay=loan&&m?(r?loan*r/(1-Math.pow(1+r,-m)):loan/m):0;
+  f.repayment_estimate=f._pay?money(f._pay,cur(f))+' a month':'';
+  const loans=f.loans_has==='yes'?(f.loans||[]):[];
+  f._debt=loans.reduce((s,x)=>s+num(x.monthly),0)+num(f.rent_payment)+num(f.maintenance)+num(f.other_commit_amount);
+  f.total_debt=money(f._debt,cur(f))+' a month';
+  return f}
+function figures(f){derive(f);const v=num(f.property_value),eq=num(f.equity_contribution),loan=num(f.requested_amount),net=num(f.net_salary);
+  return{v,eq,loan,eqPct:v?eq/v*100:0,ltv:v?loan/v*100:0,dsr:net?(f._debt+f._pay)/net*100:null,net}}
+
+/* ---------- validation ---------- */
+const visible=(d,f)=>!d.show||d.show(f);
+function sectionIssues(sec,app){
+  const f=derive(app.form),out=[];let total=0;const add=(k,msg)=>out.push({sec:sec.id,k,msg});
+  if(sec.custom==='docs'){
+    DOCS.forEach(d=>{if(!d.req||!visible(d,f))return;total++;if(!(app.docs[d.k]||[]).length)add('doc.'+d.k,`Attach ${d.n}`)});
+    return{out,total}}
+  if(sec.custom==='decl'){
+    (f.refs||[]).forEach((r,i)=>{total+=3;['name','address','phone'].forEach(c=>{if(!String(r[c]||'').trim())add(`ref.${i}.${c}`,`${r.kind} ${refNo(f,i)}: ${c} is required`)})
+      if(String(r.phone||'').trim()&&!phonePat.test(r.phone))add(`ref.${i}.phone`,`${r.kind} ${refNo(f,i)}: enter 9 to 15 digits`)});
+    total+=2;if(!f.agree)add('agree','Tick the declaration to confirm it');
+    if(String(f.sign_name||'').trim().length<3)add('sign_name','Type your full name as your electronic signature');
+    if(joint(f)){total++;if(String(f.co_sign_name||'').trim().length<3)add('co_sign_name','The co-borrower must type their full name to sign')}
+    return{out,total}}
+  for(const d of sec.fields){
+    if(!visible(d,f)||d.type==='computed'||d.type==='sub')continue;
+    if(d.type==='repeat'){const rows=f[d.k]||[];
+      if(d.reqRows){total++;if(!rows.length)add(d.k,`Add at least one entry under “${d.l}”`)}
+      rows.forEach((r,i)=>d.cols.forEach(c=>{if(!c.req)return;total++;if(!String(r[c.k]??'').trim())add(`${d.k}.${i}.${c.k}`,`${d.l} ${i+1}: ${c.l} is required`)}));continue}
+    const v=String(f[d.k]??'').trim();
+    if(d.req){total++;if(!v){add(d.k,`${d.l}: this field is required`);continue}}
+    if(!v)continue;
+    if(d.pat&&!d.pat.test(v)){add(d.k,`${d.l}: ${d.patMsg}`);continue}
+    if(d.type==='number'&&d.min!=null&&num(v)<d.min){add(d.k,`${d.l}: must be ${d.min} or more`);continue}
+    const m=d.check&&d.check(v,f);if(m)add(d.k,`${d.l}: ${m}`)}
+  if(sec.id==='C'){
+    const g=figures(f);
+    if(g.v&&g.eq&&g.eqPct<CONFIG.minEquityPct-1e-9)add('equity_contribution',`Equity contribution is ${g.eqPct.toFixed(1)}% of the property value. The minimum is ${CONFIG.minEquityPct}% (${money(g.v*CONFIG.minEquityPct/100,cur(f))}).`);
+    if(g.v&&g.loan&&g.eq&&g.loan+g.eq>g.v+1e-9)add('requested_amount','Requested amount plus equity contribution cannot exceed the property value');
+    if(num(f.tenure_years)>CONFIG.maxTenureYears)add('tenure_years',`Tenure cannot exceed ${CONFIG.maxTenureYears} years`)}
+  return{out,total}}
+const refNo=(f,i)=>f.refs.slice(0,i+1).filter(r=>r.kind===f.refs[i].kind).length;
+function validateAll(app){const all=[];SECTIONS.forEach(s=>all.push(...sectionIssues(s,app).out));return all}
+function progressOf(app){let total=0,bad=0;const per={};
+  SECTIONS.forEach(s=>{const r=sectionIssues(s,app);total+=r.total;bad+=Math.min(r.out.length,r.total);per[s.id]={total:r.total,done:Math.max(0,r.total-r.out.length),issues:r.out.length}});
+  return{pct:total?Math.round((total-bad)/total*100):0,per}}
+
+/* ---------- state ---------- */
+const ui={view:'login',appId:null,sec:0,errors:{},summary:null,note:null,from:null,tick:null};
+const myApps=()=>DB.apps.filter(a=>a.owner===PROFILE.employeeNo);
+const getApp=id=>DB.apps.find(a=>a.id===id);
+const curApp=()=>getApp(ui.appId);
+const isLocked=a=>a.status!=='Draft'&&a.status!=='Returned for Correction';
+function statusOf(a){
+  if(a.status==='Draft'||a.status==='Returned for Correction')return a.status;
+  const wf=a.workflow;if(wf.stage>=STAGES.length)return'Completed';
+  return wf.stage===1&&!a.reviewStarted?'Submitted':'In Progress'}
+function chipFor(a){const s=statusOf(a);const c=s==='Draft'?'c-draft':s==='Returned for Correction'?'c-ret':s==='Completed'?'c-ok':'c-stage';return`<span class="chip ${c}">${esc(s)}</span>`}
+const stageName=a=>a.workflow?(a.workflow.stage>=STAGES.length?'Completed':STAGES[a.workflow.stage].n):'—';
+
+/* ---------- draft creation ---------- */
+function newDraft(){
+  const id=uid('APP');
+  const app={id,ref:null,owner:PROFILE.employeeNo,status:'Draft',createdAt:Date.now(),updatedAt:Date.now(),submittedAt:null,
+    form:{employee_no:PROFILE.employeeNo,prefix:PROFILE.prefix,first_name:PROFILE.first,middle_name:PROFILE.middle,last_name:PROFILE.last,email:PROFILE.email,
+      staff_id:PROFILE.staffId,dept:PROFILE.dept,branch:PROFILE.branch,job:PROFILE.job,currency:'GHS',joint:'no',resident:'yes',
+      loans:[],assets:[],liabilities:[],insurance:[],refs:REF_KINDS.map(k=>({kind:k,name:'',relationship:'',occupation:'',address:'',phone:''}))},
+    docs:{},workflow:null,reviewerNote:null};
+  DB.apps.push(app);audit(app,'Application created','Loan type Mortgage selected; draft mortgage application created and auto-saved');persist();return app}
+
+/* =====================================================================================
+   Views
+   ===================================================================================== */
+const NAV={
+  applicant:[['products','Loan products'],['apps','My applications'],['notes','Notifications'],['audit','Audit trail']],
+  mortgage:[['queue','Review queue'],['notes','Notifications'],['audit','Audit trail']]};
+function render(keepScroll){
+  const root=$('#app');const y=window.scrollY;
+  if(!DB.session||ui.view==='login'){root.innerHTML=vLogin();return}
+  const role=DB.session.role,items=NAV[role];
+  if(!VIEWS[ui.view])ui.view=items[0][0];
+  const cnt=v=>v==='notes'?DB.notes.filter(n=>n.to===(role==='applicant'?'applicant':'team')).length:v==='queue'?DB.apps.filter(a=>a.workflow&&a.workflow.stage===1&&a.status!=='Returned for Correction').length:0;
+  const activeNav=['form','track'].includes(ui.view)?'apps':ui.view==='case'?'queue':ui.view;
+  root.innerHTML=`<div class="shell"><aside class="side"><div class="side-in">
+    <div class="brand"><div class="brand-mark">A</div><div><b>Advance Flow</b><span>Loan Origination</span></div></div>
+    <nav id="nav" aria-label="Main">${items.map(([v,l])=>`<button class="nav-b" data-act="nav" data-v="${v}" ${activeNav===v?'aria-current="page"':''}>${l}${cnt(v)?`<span class="count">${cnt(v)}</span>`:''}</button>`).join('')}</nav>
+    <div class="side-foot">Mortgage Application Entry module</div></div></aside>
+    <div class="work"><div class="top"><div class="who"><label for="role">View as</label>
+      <select id="role"><option value="applicant" ${role==='applicant'?'selected':''}>Applicant · ${esc(PROFILE.first+' '+PROFILE.last)}</option><option value="mortgage" ${role==='mortgage'?'selected':''}>Mortgage Team</option></select></div>
+      <div class="row"><span class="proto">Prototype · data stays in this browser</span><button class="btn sm" data-act="logout">Sign out</button><button class="btn sm" data-act="reset">Reset demo data</button></div></div>
+    <main id="main">${VIEWS[ui.view]()}</main></div></div>`;
+  if(ui.view==='form')afterFormRender();
+  if(!keepScroll)window.scrollTo(0,0);else window.scrollTo(0,y)}
+
+function vLogin(){return`<form class="login" data-form="login"><div class="brand"><div class="brand-mark" style="color:#fff">A</div><div><b style="color:var(--ink)">Advance Flow</b><span class="muted">Loan Origination</span></div></div>
+  <h1>Sign in</h1><p class="muted">Staff mortgage applications. This prototype accepts any password.</p>
+  <div class="f"><label for="lu">Employee number</label><input id="lu" value="${PROFILE.employeeNo}" autocomplete="username"></div>
+  <div class="f"><label for="lp">Password</label><input id="lp" type="password" value="demo" autocomplete="current-password"></div>
+  <button class="btn pri" type="submit" style="justify-content:center">Sign in</button></form>`}
+
+function vProducts(){
+  const draft=myApps().find(a=>a.status==='Draft'||a.status==='Returned for Correction');
+  const off=n=>`<div class="card off"><h3>${n}</h3><p class="muted small">Not part of this module.</p><button class="btn" disabled>Select</button></div>`;
+  return`<div class="head"><div><h1>Choose a loan product</h1><p>Select Mortgage and Advance Flow opens the mortgage application form for you and saves a draft straight away.</p></div></div>
+  <div class="cards"><div class="card on"><h3>Mortgage</h3><p class="small" style="color:var(--g700)">Home purchase, home equity, home completion and home improvement for staff.</p>
+    ${draft?`<p class="small muted">You have a ${esc(draft.status.toLowerCase())} application started ${fmtD(draft.createdAt)}. Selecting Mortgage resumes it.</p>`:''}
+    <button class="btn pri" data-act="pickMortgage" style="justify-content:center">${draft?'Resume mortgage application':'Select Mortgage'}</button></div>
+    ${off('Personal Loan')}${off('Auto Loan')}${off('Education Loan')}</div>`}
+
+function vApps(){const list=myApps().slice().reverse();
+  return`<div class="head"><div><h1>My applications</h1><p>Drafts can be edited until you submit. Submitted applications are locked unless they are returned for correction.</p></div><button class="btn pri" data-act="pickMortgage">New mortgage application</button></div>
+  ${list.length?`<div class="tw"><table class="t"><thead><tr><th>Reference</th><th>Status</th><th>Stage</th><th>Amount requested</th><th>Created</th><th>Submitted</th><th></th></tr></thead><tbody>
+  ${list.map(a=>`<tr><td class="num"><b>${esc(a.ref||'Draft')}</b></td><td>${chipFor(a)}</td><td>${esc(a.workflow?stageName(a):'—')}</td><td class="num">${a.form.requested_amount?money(num(a.form.requested_amount),cur(a.form)):'—'}</td><td>${fmtD(a.createdAt)}</td><td>${fmtD(a.submittedAt)}</td>
+  <td><button class="btn sm" data-act="${a.status==='Draft'||a.status==='Returned for Correction'?'openForm':'openTrack'}" data-id="${a.id}">${a.status==='Draft'?'Continue':a.status==='Returned for Correction'?'Correct':'Track'}</button></td></tr>`).join('')}</tbody></table></div>`
+  :'<div class="note">No applications yet. Choose Mortgage under Loan products to begin.</div>'}`}
+
+/* ---- form ---- */
+function vForm(){
+  const a=curApp(),sec=SECTIONS[ui.sec],locked=isLocked(a),p=progressOf(a);
+  return`<div class="head"><div><h1>Mortgage application</h1><p>${a.ref?`Reference <b>${esc(a.ref)}</b>. `:'Draft saved automatically as you type. '}Eight short sections; you can move between them in any order and come back later.</p></div>
+    <div class="row"><span class="small muted" id="savestate">All changes saved</span>${locked?'':'<button class="btn" data-act="saveDraft">Save draft</button>'}</div></div>
+  ${a.status==='Returned for Correction'&&a.reviewerNote?`<div class="need"><b>Returned for correction</b><p style="margin-top:4px">${esc(a.reviewerNote)}</p></div>`:''}
+  ${locked?'<div class="note">This application has been submitted and is locked. It can only be edited if it is returned for correction.</div>':''}
+  <div class="progress-line"><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p.pct}" id="pbar"><i style="width:${p.pct}%"></i></div><b class="num" id="ppct">${p.pct}%</b><span class="small muted">complete</span></div>
+  <div class="steps" id="stepper" aria-label="Sections">${stepperHtml(a,p)}</div>
+  <div id="errsum">${errSummaryHtml()}</div>
+  <section><div class="sec"><h2>Section ${sec.id}: ${esc(sec.t)}</h2><span class="sec-x">${ui.sec+1} of ${SECTIONS.length}</span></div>
+  <form id="secform" novalidate><fieldset ${locked?'disabled':''}><div class="fgrid">${sectionBody(a,sec)}</div></fieldset></form></section>
+  <div class="row" style="justify-content:space-between"><button class="btn" data-act="prev" ${ui.sec===0?'disabled':''}>Back</button>
+   <div class="row">${ui.sec<SECTIONS.length-1?'<button class="btn pri" data-act="next">Continue</button>':''}${locked?'':'<button class="btn pri" data-act="submit">Submit application</button>'}</div></div>`}
+function stepperHtml(a,p){return SECTIONS.map((s,i)=>{const r=p.per[s.id];const st=r.total&&r.issues===0?'done':r.done>0?'part':'';
+  return`<button class="${i===ui.sec?'on ':''}${st}" data-act="step" data-n="${i}">${s.id}. ${esc(s.t)}<small>${r.total?(r.issues===0?'Complete':r.done+' of '+r.total+' required'):'Optional'}</small></button>`}).join('')}
+function errSummaryHtml(){if(!ui.summary||!ui.summary.length)return'';
+  return`<div class="errbox" role="alert"><b>${ui.summary.length} thing${ui.summary.length>1?'s':''} to fix before this can be submitted</b><ul>
+  ${ui.summary.slice(0,40).map(e=>`<li><a data-act="goto" data-sec="${e.sec}" data-k="${esc(e.k)}">Section ${e.sec}</a>: ${esc(e.msg)}</li>`).join('')}</ul></div>`}
+
+function sectionBody(a,sec){
+  const f=derive(a.form);
+  if(sec.custom==='docs')return docsBody(a);
+  if(sec.custom==='decl')return declBody(a);
+  let h='';
+  for(const d of sec.fields){if(!visible(d,f))continue;h+=fieldHtml(d,f)}
+  if(sec.id==='C'||sec.id==='D')h+=`<div class="calc" id="calcbox">${calcHtml(sec.id,f)}</div>`;
+  return h}
+function calcHtml(id,f){const g=figures(f),c=cur(f);
+  if(id==='C')return`<div class="${g.v&&g.eqPct<CONFIG.minEquityPct?'warn':''}"><b>${g.v?g.eqPct.toFixed(1)+'%':'—'}</b><span>Equity share (minimum ${CONFIG.minEquityPct}%)</span></div>
+    <div><b>${g.v&&g.loan?g.ltv.toFixed(1)+'%':'—'}</b><span>Loan to value</span></div><div><b>${f._pay?money(f._pay,c):'—'}</b><span>Estimated monthly repayment</span></div>`;
+  return`<div><b>${money(f._debt,c)}</b><span>Total monthly debt obligations</span></div><div><b>${f._pay?money(f._pay,c):'—'}</b><span>Estimated new mortgage repayment</span></div>
+    <div class="${g.dsr!=null&&g.dsr>50?'warn':''}"><b>${g.dsr!=null?g.dsr.toFixed(0)+'%':'—'}</b><span>Debt to net salary, with this mortgage (indicative)</span></div>`}
+
+function fieldHtml(d,f){
+  const id='f_'+d.k,e=ui.errors[d.k],v=f[d.k]??'';
+  if(d.type==='sub')return`<div class="sub">${esc(d.l)}</div>`;
+  if(d.type==='repeat')return repeatHtml(d,f);
+  const label=`<label for="${id}">${esc(d.l)}${d.req?' <span class="req" aria-hidden="true">*</span>':' <span class="opt">(optional)</span>'}</label>`;
+  let c;
+  if(d.type==='computed')c=`<input id="${id}" value="${esc(v)}" readonly tabindex="-1" data-out="${d.k}">`;
+  else if(d.type==='radio')c=`<div class="opts" role="radiogroup" aria-label="${esc(d.l)}">${d.opts.map(([val,lab],n)=>`<label class="opt-b"><input type="radio" name="${d.k}" id="${id}_${n}" data-k="${d.k}" ${d.re?'data-re="1"':''} value="${esc(val)}" ${v===val?'checked':''}>${esc(lab)}</label>`).join('')}</div>`;
+  else if(d.type==='select')c=`<select id="${id}" data-k="${d.k}" ${d.re?'data-re="1"':''}><option value="">Choose…</option>${d.opts.map(([val,lab])=>`<option value="${esc(val)}" ${v===val?'selected':''}>${esc(lab)}</option>`).join('')}</select>`;
+  else if(d.type==='textarea')c=`<textarea id="${id}" data-k="${d.k}">${esc(v)}</textarea>`;
+  else c=`<input id="${id}" data-k="${d.k}" ${d.re?'data-re="1"':''} type="${d.type||'text'}" value="${esc(v)}" ${d.type==='number'?`min="${d.min??0}" inputmode="decimal"`:''} ${d.type==='date'&&d.k==='emp_date'?`max="${todayISO()}"`:''}>`;
+  const lab=d.type==='radio'?`<span class="lab">${esc(d.l)}${d.req?' <span class="req" aria-hidden="true">*</span>':''}</span>`:label;
+  return`<div class="f ${d.wide||(d.type==='radio'&&d.opts.length>2)?'wide':''} ${e?'bad':''}" data-wrap="${d.k}">${lab}${c}${d.hint?`<span class="hint">${esc(d.hint)}</span>`:''}${e?`<span class="err">${esc(e)}</span>`:''}</div>`}
+
+function repeatHtml(d,f){const rows=f[d.k]||[];const cols=d.cols.length;
+  return`<div class="rep" data-wrap="${d.k}"><span class="lab">${esc(d.l)}${d.reqRows?' <span class="req">*</span>':' <span class="opt">(optional)</span>'}</span>
+  ${rows.map((r,i)=>`<div class="rep-row" style="grid-template-columns:repeat(${Math.min(cols,3)},minmax(0,1fr)) auto">${d.cols.map(c=>{const ek=`${d.k}.${i}.${c.k}`,e=ui.errors[ek];
+    return`<div class="f ${e?'bad':''}"><label for="r_${d.k}_${i}_${c.k}">${esc(c.l)}${c.req?' <span class="req">*</span>':''}</label><input id="r_${d.k}_${i}_${c.k}" type="${c.type||'text'}" ${c.type==='number'?'min="0" inputmode="decimal"':''} data-rk="${d.k}" data-ri="${i}" data-rc="${c.k}" value="${esc(r[c.k]??'')}">${e?`<span class="err">${esc(e)}</span>`:''}</div>`}).join('')}
+    <button type="button" class="btn sm" data-act="rmRow" data-rk="${d.k}" data-ri="${i}" aria-label="Remove ${esc(d.l)} ${i+1}" style="align-self:end">Remove</button></div>`).join('')}
+  ${ui.errors[d.k]?`<span class="err">${esc(ui.errors[d.k])}</span>`:''}
+  <div><button type="button" class="btn sm" data-act="addRow" data-rk="${d.k}">+ ${esc(d.addLabel)}</button></div></div>`}
+
+function docsBody(a){const f=derive(a.form);const locked=isLocked(a);
+  return`<div class="f wide stack"><p class="muted">Attach each document once. PDF, JPG or PNG, up to ${CONFIG.maxFileMB} MB each. You can add several files to one document type. The Mortgage Team, HR, Credit, Legal and Collateral units all read the same copies.</p>
+  ${DOCS.filter(d=>visible(d,f)).map(d=>{const files=a.docs[d.k]||[],e=ui.errors['doc.'+d.k];
+    return`<div class="doc ${e?'bad':''}" data-wrap="doc.${d.k}"><div><b>${esc(d.n)}</b> ${d.req?'<span class="req">*</span>':'<span class="opt">(optional)</span>'}<div class="small muted">${esc(d.d)}</div>
+    ${files.length?`<ul>${files.map((x,i)=>`<li><span class="chip c-ok">Attached</span><a href="#" data-act="openFile" data-k="${d.k}" data-i="${i}">${esc(x.name)}</a><span class="muted small">${(x.size/1024).toFixed(0)} KB</span>${locked?'':`<button type="button" class="link small" data-act="rmFile" data-k="${d.k}" data-i="${i}">Remove</button>`}</li>`).join('')}</ul>`:''}
+    ${e?`<div class="err" style="margin-top:6px">${esc(e)}</div>`:''}</div>
+    ${locked?'':`<label class="btn sm ${files.length?'':'pri'}" style="cursor:pointer;align-self:start">${files.length?'Add more':'Choose files'}<input type="file" multiple hidden data-file="${d.k}" accept=".pdf,.jpg,.jpeg,.png"></label>`}</div>`}).join('')}</div>`}
+
+function declBody(a){const f=derive(a.form),g=figures(f);
+  const refs=(f.refs||[]).map((r,i)=>{const n=refNo(f,i);
+    const cell=(c,l,t)=>{const ek=`ref.${i}.${c}`,e=ui.errors[ek];return`<div class="f ${e?'bad':''}"><label for="rf_${i}_${c}">${l} <span class="req">*</span></label><input id="rf_${i}_${c}" type="${t||'text'}" data-ref="${i}" data-rc="${c}" value="${esc(r[c]||'')}">${e?`<span class="err">${esc(e)}</span>`:''}</div>`};
+    return`<div class="rep-row" style="grid-template-columns:repeat(2,minmax(0,1fr));grid-column:1/-1"><div class="sub" style="grid-column:1/-1;margin:0">${r.kind} ${n}</div>
+      ${cell('name','Name')}${cell('relationship','Relationship')}${cell('address','Address with popular landmarks')}${cell('phone','Phone number','tel')}
+      <div class="f"><label for="rf_${i}_occupation">Occupation <span class="opt">(optional)</span></label><input id="rf_${i}_occupation" data-ref="${i}" data-rc="occupation" value="${esc(r.occupation||'')}"></div></div>`}).join('');
+  const sign=(k,l)=>{const e=ui.errors[k];return`<div class="f ${e?'bad':''}"><label for="f_${k}">${l} <span class="req">*</span></label><input id="f_${k}" data-k="${k}" value="${esc(f[k]||'')}" autocomplete="off"><span class="hint">Typing your name here is your electronic signature. Signed ${fmtD(Date.now())}.</span>${e?`<span class="err">${esc(e)}</span>`:''}</div>`};
+  return`<div class="sub">Personal references</div><p class="muted small" style="grid-column:1/-1">Provide three relatives and two friends who are resident in Ghana.</p>${refs}
+  <div class="sub">Summary</div><div class="calc"><div><b>${esc((TYPES.find(t=>t[0]===f.mtg_type)||[0,'—'])[1])}</b><span>Mortgage type</span></div><div><b>${g.loan?money(g.loan,cur(f)):'—'}</b><span>Requested amount</span></div>
+   <div><b>${g.v?money(g.v,cur(f)):'—'}</b><span>Property value</span></div><div><b>${Object.values(a.docs).reduce((s,x)=>s+x.length,0)}</b><span>Documents attached</span></div></div>
+  <div class="sub">Declaration</div><ul style="grid-column:1/-1;margin:0;padding-left:20px;color:var(--g700)">
+   <li>All information in this application and its attachments is true and complete.</li>
+   <li>The bank may make the enquiries it needs to confirm these details and assess my credit, and may share this information with credit reference agencies.</li>
+   <li>The bank may decline this application or withdraw an offer if any information proves false or adverse information is received.</li>
+   <li>Fees paid in advance are not refundable once spent, and the bank has no responsibility to me as to the value or condition of the property.</li>
+   <li class="muted small" style="list-style:none;margin-left:-20px">Placeholder wording summarising the paper form. The bank’s approved declaration text replaces it.</li></ul>
+  <div class="f wide ${ui.errors.agree?'bad':''}"><label class="opt-b" style="align-self:flex-start"><input type="checkbox" id="f_agree" data-k="agree" ${f.agree?'checked':''}>I have read and agree to the declaration</label>${ui.errors.agree?`<span class="err">${esc(ui.errors.agree)}</span>`:''}</div>
+  ${sign('sign_name','Borrower signature (type full name)')}${joint(f)?sign('co_sign_name','Co-borrower signature (type full name)'):''}`}
+
+/* ---- tracking ---- */
+function vTrack(){
+  const a=curApp();if(!a||!a.workflow)return'<div class="note">Nothing to track yet.</div>';
+  const wf=a.workflow,st=wf.stage,done=st>=STAGES.length,over=!done&&wf.dueAt&&Date.now()>wf.dueAt;
+  const assigned=wf.assignee?wf.assignee:(done?'—':`${STAGES[Math.min(st,STAGES.length-1)].u} · ${st===1?CONFIG.queue:'Queue'} (awaiting pickup)`);
+  const items=STAGES.map((s,i)=>{const cls=i<st||done?'done':i===st?'cur':'fut';const icon=cls==='done'?'✓':cls==='cur'?'⏳':'○';
+    const h=wf.history.find(x=>x.stage===i);
+    return`<li class="${cls}"><span class="dot" aria-hidden="true">${icon}</span><div><div class="name">${s.n}</div><div class="small muted">${i===0?'Submitted '+fmtDT(a.submittedAt):h&&h.doneAt?'Completed '+fmtDT(h.doneAt):h?'Started '+fmtDT(h.enteredAt):s.sla?'Target '+s.sla+' business days':''}</div></div></li>`}).join('');
+  const mine=DB.audit.filter(x=>x.caseId===a.id).slice(-8).reverse();
+  return`<div class="head"><div><h1>Application tracking</h1><p>Your application is in the Advance Flow mortgage workflow. You will receive updates as it progresses.</p></div>
+    <div class="row"><button class="btn" data-act="viewApp" data-id="${a.id}">View submitted application</button>${a.status==='Returned for Correction'?`<button class="btn pri" data-act="openForm" data-id="${a.id}">Correct and resubmit</button>`:''}</div></div>
+  ${ui.justSubmitted===a.id?`<div class="okbox"><b>Your mortgage application has been submitted successfully.</b> Reference Number: <b>${esc(a.ref)}</b>. You will receive updates as your application progresses.</div>`:''}
+  ${a.status==='Returned for Correction'?`<div class="need"><b>Returned for correction</b><p style="margin-top:4px">${esc(a.reviewerNote||'')}</p></div>`:''}
+  <div class="grid2"><div class="stack">
+   <section class="panel"><div class="small muted">Mortgage Reference Number</div><div class="big">${esc(a.ref)}</div>
+    <dl class="kv" style="margin-top:12px"><dt>Current status</dt><dd>${chipFor(a)}</dd><dt>Current stage</dt><dd>${esc(stageName(a))}</dd>
+     <dt>Submission date</dt><dd>${fmtDT(a.submittedAt)}</dd><dt>Assigned stakeholder</dt><dd>${esc(assigned)}</dd>
+     <dt>Amount requested</dt><dd>${money(num(a.form.requested_amount),cur(a.form))} over ${esc(a.form.tenure_years)} years</dd></dl>
+    <div style="margin-top:14px"><div class="small muted" style="margin-bottom:4px">Progress: step ${Math.min(st+1,STAGES.length)} of ${STAGES.length}</div>
+     <div class="rail" role="img" aria-label="Stage ${Math.min(st+1,STAGES.length)} of ${STAGES.length}: ${esc(stageName(a))}">${STAGES.map((s,i)=>`<i class="${i<st||done?'d':i===st?'c':''}"></i>`).join('')}</div></div></section>
+   <section class="panel"><h3 style="margin-bottom:10px">Where your application is</h3><ol class="track">${items}</ol></section></div>
+  <div class="stack">
+   <section class="panel"><h3 style="margin-bottom:8px">SLA and timers</h3>${done?'<p class="muted">Workflow complete.</p>':`
+    <dl class="kv"><dt>Stage target</dt><dd>${STAGES[st].sla} business days · due ${fmtDT(wf.dueAt)}</dd>
+     <dt>Time remaining</dt><dd class="num" data-due="${wf.dueAt}">${over?'<span class="chip c-over">Overdue</span>':''}</dd>
+     <dt>Time in stage</dt><dd class="num" data-since="${wf.stageEnteredAt}"></dd><dt>End to end</dt><dd class="num" data-since="${wf.startedAt}"></dd>
+     <dt>Escalation path</dt><dd>${wf.escalation.map(e=>`L${e.level} ${e.to}`).join(' → ')}</dd><dt>Workflow instance</dt><dd class="num">${esc(wf.instanceId)}</dd></dl>`}</section>
+   <section class="panel"><h3 style="margin-bottom:8px">Recent activity</h3>${mine.length?`<ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px">${mine.map(x=>`<li><b>${esc(x.action)}</b><div class="small muted">${fmtDT(x.t)} · ${esc(x.actor)}</div></li>`).join('')}</ul>`:'<p class="muted">Nothing yet.</p>'}
+    <p style="margin-top:10px"><button class="link" data-act="nav" data-v="audit">Open the full audit trail</button></p></section></div></div>`}
+
+/* ---- read-only application summary ---- */
+function summaryHtml(a){const f=derive(a.form);
+  const val=(d)=>{const v=f[d.k];if(d.type==='radio'||d.type==='select'){const o=(d.opts||[]).find(x=>x[0]===v);return o?o[1]:v}
+    if(d.type==='number'&&v!=='')return Number(v).toLocaleString('en-GB');if(d.type==='date')return fmtD(v);return v};
+  return SECTIONS.map(s=>{
+    if(s.custom==='docs')return`<section class="panel"><h3 style="margin-bottom:8px">Section G: ${s.t}</h3>${DOCS.map(d=>{const fl=a.docs[d.k]||[];return fl.length?`<div><b>${esc(d.n)}</b>: ${fl.map((x,i)=>`<a href="#" data-act="openFile" data-k="${d.k}" data-i="${i}" data-app="${a.id}">${esc(x.name)}</a>`).join(', ')}</div>`:''}).join('')}</section>`;
+    if(s.custom==='decl')return`<section class="panel"><h3 style="margin-bottom:8px">Section H: ${s.t}</h3>${(f.refs||[]).map(r=>`<div>${esc(r.kind)}: ${esc(r.name)}, ${esc(r.relationship)}, ${esc(r.phone)}, ${esc(r.address)}</div>`).join('')}<div style="margin-top:6px">Signed by <b>${esc(f.sign_name||'—')}</b>${f.co_sign_name?` and <b>${esc(f.co_sign_name)}</b>`:''}</div></section>`;
+    const rows=s.fields.filter(d=>visible(d,f)&&d.type!=='sub'&&d.type!=='repeat'&&f[d.k]!==''&&f[d.k]!=null).map(d=>`<dt>${esc(d.l)}</dt><dd>${esc(val(d))}</dd>`).join('');
+    const reps=s.fields.filter(d=>d.type==='repeat'&&visible(d,f)&&(f[d.k]||[]).length).map(d=>`<dt>${esc(d.l)}</dt><dd>${f[d.k].map(r=>esc(d.cols.map(c=>r[c.k]).filter(Boolean).join(' · '))).join('<br>')}</dd>`).join('');
+    return`<section class="panel"><h3 style="margin-bottom:8px">Section ${s.id}: ${s.t}</h3><dl class="kv">${rows}${reps}</dl></section>`}).join('')}
+function vView(){const a=curApp();return`<div class="head"><div><h1>${esc(a.ref||'Application')}</h1><p>Read-only copy of the submitted application.</p></div><button class="btn" data-act="${ui.from==='case'?'openCase':'openTrack'}" data-id="${a.id}">Back</button></div><div class="stack">${summaryHtml(a)}</div>`}
+
+/* ---- mortgage team ---- */
+function vQueue(){const list=DB.apps.filter(a=>a.workflow).sort((x,y)=>y.submittedAt-x.submittedAt);
+  return`<div class="head"><div><h1>${CONFIG.queue}</h1><p>New mortgage applications land here the moment the applicant submits. The Advance Flow engine handles routing, SLA tracking and escalation.</p></div></div>
+  ${list.length?`<div class="tw"><table class="t"><thead><tr><th>Reference</th><th>Applicant</th><th>Amount</th><th>Stage</th><th>Status</th><th>Submitted</th><th>SLA due</th><th></th></tr></thead><tbody>
+  ${list.map(a=>{const wf=a.workflow,over=wf.dueAt&&Date.now()>wf.dueAt&&wf.stage<STAGES.length;return`<tr><td class="num"><b>${esc(a.ref)}</b></td><td>${esc(a.form.full_name)}<div class="small muted">${esc(a.form.dept)}</div></td><td class="num">${money(num(a.form.requested_amount),cur(a.form))}</td><td>${esc(stageName(a))}</td><td>${chipFor(a)}</td><td>${fmtDT(a.submittedAt)}</td><td>${wf.dueAt?fmtD(wf.dueAt)+(over?' <span class="chip c-over">Overdue</span>':''):'—'}</td><td><button class="btn sm" data-act="openCase" data-id="${a.id}">Open</button></td></tr>`}).join('')}</tbody></table></div>`
+  :'<div class="note">The queue is empty. Switch to Applicant and submit an application to see it arrive.</div>'}`}
+function vCase(){const a=curApp(),wf=a.workflow,done=wf.stage>=STAGES.length;
+  const canAct=!done&&a.status!=='Returned for Correction';
+  return`<div class="head"><div><h1>${esc(a.ref)} · ${esc(a.form.full_name)}</h1><p>${chipFor(a)} &nbsp;${esc(stageName(a))} · submitted ${fmtDT(a.submittedAt)}</p></div><button class="btn" data-act="nav" data-v="queue">Back to queue</button></div>
+  ${canAct?`<section class="panel"><h3 style="margin-bottom:8px">Review actions</h3>
+    <p class="small muted" style="margin-bottom:10px">These buttons stand in for the Advance Flow engine so the whole journey can be demonstrated.</p>
+    ${ui.note?`<div class="f"><label for="noteText">Note to the applicant</label><textarea id="noteText" placeholder="What needs to be corrected?"></textarea></div><div class="row" style="margin-top:10px"><button class="btn pri" data-act="returnOk">Return for correction</button><button class="btn" data-act="noteCancel">Cancel</button></div>`
+    :`<div class="row"><button class="btn pri" data-act="claim" ${wf.assignee?'disabled':''}>${wf.assignee?'Picked up by '+esc(wf.assignee):'Pick up this case'}</button><button class="btn" data-act="advance">Complete ${esc(STAGES[wf.stage].n)} and move on</button><button class="btn" data-act="returnNote">Return for correction</button></div>`}</section>`:''}
+  <div class="stack">${summaryHtml(a)}</div>`}
+
+/* ---- lists ---- */
+function vNotes(){const role=DB.session.role==='applicant'?'applicant':'team';const list=DB.notes.filter(n=>n.to===role).slice().reverse();
+  return`<div class="head"><div><h1>Notifications</h1><p>${role==='applicant'?'Messages sent to you about your mortgage application.':'Messages sent to the Mortgage Team.'}</p></div></div>
+  ${list.length?`<div class="stack">${list.map(n=>`<div class="panel"><div class="small muted">${fmtDT(n.t)} · ${n.channels.join(', ')} · ${esc(n.ref||'')}</div><p style="margin-top:4px">${esc(n.message)}</p></div>`).join('')}</div>`:'<div class="note">No notifications yet.</div>'}`}
+function vAudit(){const role=DB.session.role;const mineIds=new Set(myApps().map(a=>a.id));
+  const q=(ui.auditQ||'').toLowerCase();
+  const list=DB.audit.filter(e=>role==='mortgage'||mineIds.has(e.caseId)).filter(e=>!q||(e.ref+e.caseId+e.actor+e.action+e.detail).toLowerCase().includes(q)).slice().reverse();
+  return`<div class="head"><div><h1>Audit trail</h1><p>Every action is time-stamped and linked to its mortgage application record.</p></div>
+   <div class="f" style="min-width:240px"><label for="aq" class="small muted">Filter</label><input id="aq" type="search" placeholder="Reference, action, actor…" value="${esc(ui.auditQ||'')}"></div></div>
+  ${list.length?`<div class="tw"><table class="t"><thead><tr><th>#</th><th>Time stamp</th><th>Application</th><th>Actor</th><th>Action</th><th>Detail</th></tr></thead><tbody>
+  ${list.map(e=>`<tr><td class="num muted">${e.n}</td><td class="num" style="white-space:nowrap">${fmtDT(e.t)}</td><td class="num"><b>${esc(e.ref||'Draft')}</b><div class="small muted">${esc(e.caseId)}</div></td><td>${esc(e.actor)}</td><td><b>${esc(e.action)}</b></td><td>${esc(e.detail)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="note">No entries match.</div>'}`}
+
+const VIEWS={products:vProducts,apps:vApps,form:vForm,track:vTrack,view:vView,queue:vQueue,case:vCase,notes:vNotes,audit:vAudit};
+
+/* =====================================================================================
+   Actions
+   ===================================================================================== */
+function go(v,keep){ui.view=v;ui.errors={};if(v!=='form')ui.summary=null;render(keep)}
+function afterFormRender(){}
+function refreshForm(){ // re-render only the form chrome, keeping scroll
+  const y=window.scrollY;render(true);window.scrollTo(0,y)}
+function updateChrome(){const a=curApp();if(!a||ui.view!=='form')return;const p=progressOf(a);
+  if(ui.summary){ui.summary=validateAll(a);const es=$('#errsum');if(es)es.innerHTML=errSummaryHtml()}
+  const pb=$('#pbar');if(pb){pb.setAttribute('aria-valuenow',p.pct);pb.firstElementChild.style.width=p.pct+'%'}
+  const pp=$('#ppct');if(pp)pp.textContent=p.pct+'%';const st=$('#stepper');if(st)st.innerHTML=stepperHtml(a,p);
+  const cb=$('#calcbox');if(cb)cb.innerHTML=calcHtml(SECTIONS[ui.sec].id,derive(a.form));
+  document.querySelectorAll('[data-out]').forEach(i=>{i.value=a.form[i.dataset.out]||''})}
+
+function openSection(n){ui.sec=n;ui.errors=sectionErrMap(n);render()}
+function sectionErrMap(n){const m={};(ui.summary||[]).filter(e=>e.sec===SECTIONS[n].id).forEach(e=>m[e.k]=e.msg);return m}
+
+function submitApp(){
+  const a=curApp();if(!a||isLocked(a))return;
+  const issues=validateAll(a);
+  if(issues.length){ui.summary=issues;const first=SECTIONS.findIndex(s=>s.id===issues[0].sec);ui.sec=first;ui.errors=sectionErrMap(first);render();
+    toast(issues.length+' item'+(issues.length>1?'s':'')+' to fix before submitting.');window.scrollTo(0,0);return}
+  const resubmit=a.status==='Returned for Correction';
+  derive(a.form);const prev=a.status;
+  if(!a.ref){do{DB.seq++;a.ref=`MTG-${new Date().getFullYear()}-${String(DB.seq).padStart(6,'0')}`}while(DB.apps.some(x=>x!==a&&x.ref===a.ref))}
+  a.submittedAt=Date.now();a.form.submitted_at=a.submittedAt;a.reviewStarted=false;
+  Object.values(a.docs).flat().forEach(d=>d.storedAt=a.submittedAt);
+  const nDocs=Object.values(a.docs).flat().length;
+  a.status='Submitted';a.reviewerNote=null;ui.summary=null;
+  audit(a,resubmit?'Form resubmitted':'Form submitted',`${resubmit?'Resubmitted after correction':'Submitted'} as ${a.ref}; record locked against editing`);
+  audit(a,'Status changed',`${prev} → Submitted`,'System');
+  audit(a,'Documents stored',`${nDocs} file${nDocs===1?'':'s'} stored against ${a.ref}`,'System');
+  AdvanceFlow.startWorkflow(a);
+  notify(a,'applicant',['In-app','Email','SMS'],`Your mortgage application has been submitted successfully. Reference Number: ${a.ref}. You will receive updates as your application progresses.`);
+  notify(a,'team',['In-app','Email'],'A new mortgage application has been submitted and requires review.');
+  persist();ui.appId=a.id;ui.justSubmitted=a.id;go('track')}
+
+const ACT={
+  nav:d=>{ui.justSubmitted=null;ui.view=d.v;go(d.v)},
+  logout:()=>{DB.session=null;persist();ui.view='login';render()},
+  reset:()=>{if(!confirm('Delete all prototype applications, files and audit entries from this browser?'))return;
+    const s=DB.session;DB=blank();DB.session=s;persist();FILES.mem={};try{indexedDB.deleteDatabase('advanceflow-mortgage-files');FILES.p=null;FILES.db=null}catch(_){}ui.appId=null;go(s&&s.role==='mortgage'?'queue':'products');toast('Demo data cleared.')},
+  pickMortgage:()=>{let a=myApps().find(x=>x.status==='Draft'||x.status==='Returned for Correction');
+    if(!a){a=newDraft();toast('Mortgage selected. Your draft application was created and is saving automatically.')}else toast('Resuming your mortgage application.');
+    ui.appId=a.id;ui.sec=0;ui.justSubmitted=null;go('form')},
+  openForm:d=>{ui.appId=d.id;ui.sec=0;go('form')},
+  openTrack:d=>{ui.appId=d.id;ui.justSubmitted=null;go('track')},
+  viewApp:d=>{ui.appId=d.id;ui.from='track';go('view')},
+  openCase:d=>{ui.appId=d.id;go('case')},
+  saveDraft:()=>{const a=curApp();a.updatedAt=Date.now();audit(a,'Draft saved','Applicant saved the draft');persist();toast('Draft saved. Come back to it any time from My applications.')},
+  step:d=>openSection(+d.n),
+  prev:()=>openSection(Math.max(0,ui.sec-1)),
+  next:()=>openSection(Math.min(SECTIONS.length-1,ui.sec+1)),
+  goto:d=>{const n=SECTIONS.findIndex(s=>s.id===d.sec);ui.sec=n;ui.errors=sectionErrMap(n);render();
+    const el=document.querySelector(`[data-wrap="${CSS.escape(d.k)}"] input, [data-wrap="${CSS.escape(d.k)}"] select, [data-wrap="${CSS.escape(d.k)}"] textarea, #f_${CSS.escape(d.k)}, [data-wrap="${CSS.escape(d.k)}"]`);
+    if(el){el.scrollIntoView({block:'center'});if(el.focus)el.focus()}},
+  submit:submitApp,
+  addRow:d=>{const a=curApp();(a.form[d.rk]=a.form[d.rk]||[]).push({});a.updatedAt=Date.now();persistSoon();refreshForm()},
+  rmRow:d=>{const a=curApp();a.form[d.rk].splice(+d.ri,1);a.updatedAt=Date.now();persistSoon();refreshForm()},
+  rmFile:async d=>{const a=curApp(),x=a.docs[d.k].splice(+d.i,1)[0];await FILES.del(x.id);audit(a,'Document removed',`${docName(d.k)}: ${x.name}`);persist();updateChrome();refreshForm()},
+  openFile:async d=>{const a=d.app?getApp(d.app):curApp();const x=a.docs[d.k][+d.i];const b=await FILES.get(x.id);
+    if(!b){toast('The file content is not available in this browser session.');return}window.open(URL.createObjectURL(b),'_blank')},
+  returnNote:()=>{ui.note=true;render(true);const t=$('#noteText');if(t)t.focus()},
+  noteCancel:()=>{ui.note=false;render(true)},
+  returnOk:()=>{const t=$('#noteText').value.trim();if(!t){toast('Write a short note for the applicant first.');return}
+    const a=curApp();a.status='Returned for Correction';a.reviewerNote=t;a.workflow.paused=true;
+    audit(a,'Returned for correction',t);audit(a,'Status changed','Submitted → Returned for Correction','System');
+    notify(a,'applicant',['In-app','Email','SMS'],`Your mortgage application ${a.ref} has been returned for correction: ${t}`);
+    ui.note=false;persist();go('case');toast('Returned to the applicant. The record is unlocked for editing.')},
+  claim:()=>{const a=curApp();a.workflow.assignee='Mortgage Officer (you)';a.reviewStarted=true;audit(a,'Case picked up','Picked up from the Mortgage Team Review Queue');persist();render(true);toast('Case picked up.')},
+  advance:()=>{const a=curApp(),wf=a.workflow,from=STAGES[wf.stage].n;AdvanceFlow.moveTo(a,wf.stage+1);a.reviewStarted=true;
+    const to=wf.stage>=STAGES.length?'Completed':STAGES[wf.stage].n;
+    audit(a,'Status changed',`${from} → ${to}`,'Mortgage Team');
+    if(wf.stage<STAGES.length)audit(a,'SLA tracking started',`${STAGES[wf.stage].n}: ${STAGES[wf.stage].sla} business days, due ${fmtDT(wf.dueAt)}`,'System');
+    notify(a,'applicant',['In-app','Email'],`Your mortgage application ${a.ref} has moved to ${to}.`);
+    persist();render(true);toast('Moved to '+to+'.')}
+};
+const docName=k=>(DOCS.find(d=>d.k===k)||{n:k}).n;
+
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;if(b.tagName==='A')e.preventDefault();ACT[b.dataset.act]?.(b.dataset)});
+document.addEventListener('submit',e=>{if(e.target.dataset.form==='login'){e.preventDefault();
+  DB.session={role:'applicant'};persist();ui.view='products';render()}else e.preventDefault()});
+
+function setField(t){
+  const a=curApp();if(!a||isLocked(a))return;const f=a.form;
+  if(t.dataset.k){f[t.dataset.k]=t.type==='checkbox'?t.checked:t.value;clearErr(t.dataset.k,t)}
+  else if(t.dataset.rk){const row=f[t.dataset.rk][+t.dataset.ri];row[t.dataset.rc]=t.value;clearErr(`${t.dataset.rk}.${t.dataset.ri}.${t.dataset.rc}`,t)}
+  else if(t.dataset.ref!=null){f.refs[+t.dataset.ref][t.dataset.rc]=t.value;clearErr(`ref.${t.dataset.ref}.${t.dataset.rc}`,t)}
+  else return false;
+  a.updatedAt=Date.now();persistSoon();updateChrome();return true}
+function clearErr(k,t){if(ui.errors[k]){delete ui.errors[k];const w=t.closest('.f');if(w){w.classList.remove('bad');w.querySelector(':scope > .err')?.remove()}}
+  if(ui.summary){ui.summary=ui.summary.filter(x=>x.k!==k);const s=$('#errsum');if(s)s.innerHTML=errSummaryHtml()}}
+document.addEventListener('input',e=>{const t=e.target;
+  if(t.id==='aq'){ui.auditQ=t.value;const p=t.selectionStart;render(true);const n=$('#aq');n.focus();n.setSelectionRange(p,p);return}
+  if(t.type==='radio'||t.tagName==='SELECT'||t.type==='checkbox'||t.type==='file')return;setField(t)});
+document.addEventListener('change',async e=>{const t=e.target;
+  if(t.id==='role'){DB.session.role=t.value;persist();ui.appId=null;ui.view=NAV[t.value][0][0];render();return}
+  if(t.dataset.file){await addFiles(t.dataset.file,t.files);t.value='';return}
+  if(setField(t)&&t.dataset.re)refreshForm()});
+
+async function addFiles(key,list){
+  const a=curApp();if(!a||isLocked(a))return;let n=0;
+  for(const file of list){
+    if(!CONFIG.acceptedTypes.includes(file.type)){toast(`${file.name}: only PDF, JPG or PNG files are accepted.`);continue}
+    if(file.size>CONFIG.maxFileMB*1048576){toast(`${file.name} is larger than ${CONFIG.maxFileMB} MB.`);continue}
+    const id=uid('DOC');await FILES.put(id,file);
+    (a.docs[key]=a.docs[key]||[]).push({id,name:file.name,size:file.size,type:file.type,uploadedAt:Date.now()});
+    audit(a,'Document uploaded',`${docName(key)}: ${file.name} (${(file.size/1024).toFixed(0)} KB)`);n++}
+  if(n){a.updatedAt=Date.now();delete ui.errors['doc.'+key];ui.summary=ui.summary&&ui.summary.filter(x=>x.k!=='doc.'+key);persist();toast(n+' file'+(n>1?'s':'')+' attached.');refreshForm()}}
+
+/* live timers on the tracking page */
+setInterval(()=>{const now=Date.now();
+  document.querySelectorAll('[data-since]').forEach(el=>el.textContent=dur(now-+el.dataset.since));
+  document.querySelectorAll('[data-due]').forEach(el=>{const ms=+el.dataset.due-now;el.innerHTML=ms<0?`<span class="chip c-over">Overdue ${dur(-ms)}</span>`:dur(ms)})},1000);
+
+/* start */
+if(DB.session&&DB.session.role){ui.view=DB.session.role==='mortgage'?'queue':'products'}
+render();
+</script>
+</body>
+</html>
