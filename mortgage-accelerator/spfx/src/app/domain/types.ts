@@ -463,6 +463,8 @@ export interface MortgageCase {
   disbursements: Disbursement[];
   postItems: PostItem[];
   readiness?: ReadinessResult;
+  /** Result of the Loan Eligibility step, computed by the Advance Flow eligibility service. */
+  eligibility?: { input: EligibilityInput; result: EligibilityResult; exceptionalApproval: boolean };
   offer?: { issuedAt: string; validUntil: string; acceptedAt?: string };
   declineReason?: string;
   locked: boolean;
@@ -470,6 +472,47 @@ export interface MortgageCase {
   returnedNote?: string;
   /** The state the case was in when it was returned, so resubmission resumes there. */
   returnedFromState?: CaseState;
+}
+
+/** What the existing Staff Loan "Loan Eligibility" step asks for. */
+export interface EligibilityInput {
+  loanType: ProductCode;
+  accountNumber: string;
+  dateOfBirth: string;
+  netSalary: number;
+  allowances: number;
+  loanAmount: number;
+  /** Monthly instalment on personal, auto and education loans. */
+  instalmentPersonal: number;
+  /** Monthly instalment on mortgage and hire purchase only. */
+  instalmentMortgageHp: number;
+  payOffExistingLoans: boolean;
+  tenorMonths?: number;
+}
+
+/** What the "Computation Results" panel shows. */
+export interface EligibilityResult {
+  interestRatePct: number;
+  dirLimitPct: number;
+  tenorMonths: number;
+  periodicInstalment: number;
+  dirCapitalPersonalPct: number;
+  dirAllStaffLoansPct: number;
+  loanAmountQualifiedFor: number;
+  decisionRule: 'ELIGIBLE' | 'EXCEEDS_DIR_LIMIT' | 'EXCEEDS_QUALIFIED_AMOUNT' | 'NOT_ELIGIBLE';
+  decisionText: string;
+  exceptionalApprovalAllowed: boolean;
+  computedAt: string;
+}
+
+/** Returned once the staff member passes the account-number and OTP check. */
+export interface StaffProfile {
+  fullName: string;
+  dateOfBirth: string;
+  netSalary: number;
+  allowances: number;
+  instalmentPersonal: number;
+  instalmentMortgageHp: number;
 }
 
 export interface Kpi {

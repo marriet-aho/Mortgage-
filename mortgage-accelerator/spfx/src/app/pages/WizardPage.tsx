@@ -7,6 +7,29 @@ import { instalment, maxEquityRelease, maxTenorYears, minDownPayment, netIncome,
 import { DraftPatch } from '../services/client';
 import { MortgageCase, PRODUCT_LABEL, PURPOSE_LABEL, EquityPurpose, ProductCode } from '../domain/types';
 import { money } from '../format';
+import { EligibilityPhase } from './EligibilityPhase';
+
+const PHASES = ['Loan Eligibility', 'Loan Application', 'Finish'];
+
+/** The same three-phase header the existing Staff Loan flow uses. */
+function PhaseBar(p: { phase: number }): JSX.Element {
+  return (
+    <div className="ma-row" style={{ justifyContent: 'center', gap: 0, flexWrap: 'nowrap', margin: '4px 0 8px' }} aria-label="Progress">
+      {PHASES.map(function (n, i) {
+        const on = i === p.phase, done = i < p.phase;
+        return (
+          <React.Fragment key={n}>
+            {i > 0 ? <span style={{ flex: '0 1 120px', height: 1, background: done || on ? '#D95400' : '#D2CECA', margin: '0 12px' }} /> : null}
+            <span className="ma-row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+              <span style={{ width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center', fontWeight: 600, background: on ? '#D95400' : done ? '#55514E' : '#F1EFED', color: on || done ? '#fff' : '#7B7672' }}>{done ? '✓' : i + 1}</span>
+              <span style={{ fontSize: 15, color: on ? '#2B2927' : '#7B7672' }}>{n}</span>
+            </span>
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
 
 const STEPS = ['Applicant', 'Request', 'Finances', 'Consent', 'Documents', 'Review and submit'];
 
@@ -66,6 +89,8 @@ export function WizardPage(): JSX.Element {
   const [errors, setErrors] = React.useState<Errors>({});
   const [saved, setSaved] = React.useState('');
   const [signName, setSignName] = React.useState('');
+  const [phase, setPhase] = React.useState(0);
+  const [doneRef, setDoneRef] = React.useState('');
   const [docsPct, setDocsPct] = React.useState(0);
   const timer = React.useRef<number | undefined>(undefined);
   const pending = React.useRef<DraftPatch>({});
@@ -77,6 +102,7 @@ export function WizardPage(): JSX.Element {
       if (!live) { return; }
       setC(d);
       setSignName(d.consent.signedBy || '');
+      setPhase(d.eligibility || caseId ? 1 : 0);
     }, function (e) { setError(String(e)); });
     return function () { live = false; };
   }, [product, caseId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -156,7 +182,9 @@ export function WizardPage(): JSX.Element {
     flush.then(function () { return app.client.submitCase(c.id); }).then(function (d) {
       app.toast('Submitted. Reference ' + d.ref + '. Pre-approval is running.');
       app.bump();
-      app.go('/cases/' + d.id);
+      setDoneRef(d.ref);
+      setPhase(2);
+      window.scrollTo(0, 0);
     }, function (e) { app.toast(e instanceof Error ? e.message : String(e)); });
   };
 
@@ -168,11 +196,43 @@ export function WizardPage(): JSX.Element {
   const r = c.readiness;
   const err = function (k: string): string | undefined { return errors[k]; };
 
+  if (phase === 0) {
+    return (
+      <>
+        <Head title={'Apply: ' + PRODUCT_LABEL[c.product]} sub="Start with your eligibility. It uses the same Staff Loan check you already know, then carries your figures into the application." />
+        <PhaseBar phase={0} />
+        <EligibilityPhase c={c} product={product} onProductChange={function (pr) { app.go('/apply/' + (pr === 'HOME_PURCHASE' ? 'purchase' : 'equity')); }} onDone={function () {
+          app.client.getCase(c.id).then(function (d) { setC(d); setPhase(1); window.scrollTo(0, 0); }, function (e) { app.toast(String(e)); });
+        }} />
+      </>
+    );
+  }
+  if (phase === 2) {
+    return (
+      <>
+        <Head title="Application submitted" />
+        <PhaseBar phase={2} />
+        <Note tone="ok"><b>Your mortgage application has been submitted successfully.</b> Reference Number: <b>{doneRef}</b>. You will receive updates as your application progresses.</Note>
+        <Panel title="What happens next">
+          <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <li>Pre-approval runs now: employment check, credit bureau, affordability and risk. The target is under 24 hours.</li>
+            <li>You will be told the result by notification, email and SMS.</li>
+            <li>If you are pre-approved, confirm to start the valuation and legal searches together.</li>
+            <li>You can write to HR, Credit, Legal and Collateral directly from your case.</li>
+          </ol>
+        </Panel>
+        <div className="ma-row"><Button primary onClick={function () { app.go('/cases/' + c.id); }}>Track my application</Button><Button onClick={function () { app.go('/'); }}>Back to home</Button></div>
+      </>
+    );
+  }
+
   return (
     <>
       <Head title={'Apply: ' + PRODUCT_LABEL[c.product]} sub="Six short steps. Your draft saves as you type, and your readiness updates as you go."
         actions={<span className="small muted" aria-live="polite">{saved}</span>} />
+      <PhaseBar phase={1} />
       {c.returnedNote ? <Note tone="need"><b>Returned for correction.</b> {c.returnedNote}</Note> : null}
+      {c.eligibility ? <Note>Eligibility: DIR {c.eligibility.result.dirAllStaffLoansPct.toFixed(1)}% against a {c.eligibility.result.dirLimitPct}% limit · qualifies for {money(c.eligibility.result.loanAmountQualifiedFor)}{c.eligibility.exceptionalApproval ? ' · exceptional approval requested' : ''}.</Note> : null}
       <Progress pct={((step + (step === 5 ? 1 : 0)) / STEPS.length) * 100} label={'Step ' + (step + 1) + ' of ' + STEPS.length} />
       <div className="ma-steps" aria-label="Steps">
         {STEPS.map(function (s, i) { return <button key={s} type="button" className={'ma-step' + (i === step ? ' on' : i < step ? ' done' : '')} onClick={function () { go(i); }}>{i + 1}. {s}</button>; })}

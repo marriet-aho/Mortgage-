@@ -240,3 +240,26 @@ describe('collaboration and requests', () => {
     expect(seen).toContain('Pre-approved');
   });
 });
+
+describe('eligibility step and OTP', () => {
+  it('needs a 13-digit account number and the right code', async () => {
+    api.setRole('APPLICANT');
+    await expect(api.requestOtp('123')).rejects.toThrow(/13-digit/);
+    await expect(api.verifyOtp('1234567890123', '000000')).rejects.toThrow(/not correct/);
+    const prof = await api.verifyOtp('1234567890123', '123456');
+    expect(prof.netSalary).toBeGreaterThan(0);
+  });
+
+  it('stores the result on the case, carries it into the application, and exceptional approval adds the executive level', async () => {
+    api.setRole('APPLICANT');
+    const d = await api.createDraft('HOME_PURCHASE');
+    const prof = await api.verifyOtp('1234567890123', '123456');
+    const input = { loanType: 'HOME_PURCHASE' as const, accountNumber: '1234567890123', dateOfBirth: prof.dateOfBirth, netSalary: prof.netSalary, allowances: prof.allowances, loanAmount: 2000000, instalmentPersonal: prof.instalmentPersonal, instalmentMortgageHp: 0, payOffExistingLoans: false };
+    const r = await api.computeEligibility(d.id, input, true);
+    expect(r.decisionRule).toBe('EXCEEDS_DIR_LIMIT');
+    const c = await api.getCase(d.id);
+    expect(c.amountRequested).toBe(2000000);
+    expect(c.eligibility && c.eligibility.exceptionalApproval).toBe(true);
+    expect(c.financials.basicSalary).toBe(prof.netSalary);
+  });
+});

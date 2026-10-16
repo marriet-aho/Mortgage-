@@ -28,7 +28,10 @@ import {
   ValuationRequest,
   Valuer,
   CaseState,
-  Role
+  Role,
+  EligibilityInput,
+  EligibilityResult,
+  StaffProfile
 } from '../domain/types';
 
 export interface CaseFilter {
@@ -92,6 +95,11 @@ export interface AdvanceFlowClient {
   withdrawCase(id: string, reason: string): Promise<MortgageCase>;
   returnCase(id: string, note: string): Promise<MortgageCase>;
   getReadiness(id: string): Promise<ReadinessResult>;
+
+  /* Loan Eligibility: the existing Staff Loan eligibility service */
+  requestOtp(accountNumber: string): Promise<{ sent: boolean; maskedPhone: string }>;
+  verifyOtp(accountNumber: string, code: string): Promise<StaffProfile>;
+  computeEligibility(caseId: string, input: EligibilityInput, exceptionalApproval: boolean): Promise<EligibilityResult>;
 
   /* Workflow Engine: tasks */
   listTasks(filter?: { role?: Role; caseId?: string; open?: boolean }): Promise<Task[]>;

@@ -16,7 +16,9 @@ import {
   ReadinessResult,
   SlaClock,
   ValuationRequest,
-  ConsentSet
+  ConsentSet,
+  EligibilityInput,
+  EligibilityResult
 } from './types';
 
 export const POLICY = {
@@ -637,4 +639,64 @@ export function equityPayeeRule(purpose: EquityDetails['purpose']): { payee: str
     default:
       return { payee: 'Applicant account', staged: false };
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Loan eligibility (mirrors the Staff Loan "Compute Eligibility" step) */
+/* ------------------------------------------------------------------ */
+
+export interface EligibilityPolicy {
+  interestRatePct: number;
+  dirLimitPct: number;
+  maxTenorMonths: number;
+  retirementAge: number;
+}
+
+/**
+ * Local implementation used by the harness and by the live preview in the wizard.
+ * In production the Advance Flow eligibility service is the source of truth: the module calls it
+ * (see HttpAdvanceFlowClient.computeEligibility) and shows its numbers, so there is one set of policy.
+ * Assumed definitions, to confirm against the service:
+ *   income  = net salary + allowances
+ *   DIR (Capital + Personal) = (new instalment + mortgage/HP instalments) / income
+ *   DIR (All Staff Loans)    = (new instalment + mortgage/HP + personal/auto/education) / income,
+ *                              with personal/auto/education removed when existing loans are paid off.
+ */
+export function computeEligibility(i: EligibilityInput, policy: EligibilityPolicy, now: Date): EligibilityResult {
+  const income = i.netSalary + i.allowances;
+  const retire = new Date(i.dateOfBirth);
+  retire.setUTCFullYear(retire.getUTCFullYear() + policy.retirementAge);
+  const monthsToRetire = Math.max(0, (retire.getUTCFullYear() - now.getUTCFullYear()) * 12 + (retire.getUTCMonth() - now.getUTCMonth()));
+  const tenorMonths = i.dateOfBirth ? Math.min(policy.maxTenorMonths, monthsToRetire, i.tenorMonths || policy.maxTenorMonths) : 0;
+  const periodic = instalment(i.loanAmount, policy.interestRatePct, tenorMonths / 12);
+  const personal = i.payOffExistingLoans ? 0 : i.instalmentPersonal;
+  const dirCap = income > 0 ? ((periodic + i.instalmentMortgageHp) / income) * 100 : 0;
+  const dirAll = income > 0 ? ((periodic + i.instalmentMortgageHp + personal) / income) * 100 : 0;
+  const room = Math.max(0, (policy.dirLimitPct / 100) * income - i.instalmentMortgageHp - personal);
+  const qualified = Math.floor(loanForInstalment(room, policy.interestRatePct, tenorMonths / 12));
+  let rule: EligibilityResult['decisionRule'] = 'ELIGIBLE';
+  let text = 'Within the DIR limit and the qualifying amount.';
+  if (tenorMonths <= 0 || income <= 0 || i.loanAmount <= 0) {
+    rule = 'NOT_ELIGIBLE';
+    text = 'Enter the figures above to compute eligibility.';
+  } else if (dirAll > policy.dirLimitPct + 1e-9) {
+    rule = 'EXCEEDS_DIR_LIMIT';
+    text = 'DIR ' + dirAll.toFixed(1) + '% is above the ' + policy.dirLimitPct + '% limit.';
+  } else if (i.loanAmount > qualified) {
+    rule = 'EXCEEDS_QUALIFIED_AMOUNT';
+    text = 'The amount is above what you qualify for.';
+  }
+  return {
+    interestRatePct: policy.interestRatePct,
+    dirLimitPct: policy.dirLimitPct,
+    tenorMonths,
+    periodicInstalment: periodic,
+    dirCapitalPersonalPct: dirCap,
+    dirAllStaffLoansPct: dirAll,
+    loanAmountQualifiedFor: qualified,
+    decisionRule: rule,
+    decisionText: text,
+    exceptionalApprovalAllowed: rule === 'EXCEEDS_DIR_LIMIT' || rule === 'EXCEEDS_QUALIFIED_AMOUNT',
+    computedAt: now.toISOString()
+  };
 }

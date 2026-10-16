@@ -11,6 +11,7 @@ import {
   approvalsComplete,
   buildApprovals,
   conditionsOpen,
+  computeEligibility,
   conditionTemplates,
   consentComplete,
   disbursementBlockers,
@@ -29,6 +30,9 @@ import {
   ConditionStatus,
   CaseState,
   Disbursement,
+  EligibilityInput,
+  EligibilityResult,
+  StaffProfile,
   DocCategory,
   DocRef,
   DocRequest,
@@ -51,12 +55,12 @@ import {
 import { AdvanceFlowClient, AnalyticsSnapshot, CaseFilter, DevControls, DraftPatch } from './client';
 import { buildSeed, DAY, newChecklist, nextId, SeedData, slaFor } from './seed';
 
-interface Persona { employeeNo: string; staffId: string; name: string; email: string; department: string; position: string; dob: string; retire: string; employed: string }
+interface Persona { employeeNo: string; staffId: string; name: string; email: string; department: string; position: string; dob: string; retire: string; employed: string; netSalary: number; allowances: number; personal: number; mortgageHp: number }
 
 /** Two demo applicants: one with a case already in flight, one with a clean slate. */
 export const PERSONAS: Persona[] = [
-  { employeeNo: 'E-04417', staffId: 'S-04417', name: 'Ama Serwaa Owusu', email: 'ama.owusu@example.com', department: 'Operations', position: 'Operations Manager', dob: '1988-03-14', retire: '2048-03-14', employed: '2015-01-05' },
-  { employeeNo: 'E-04499', staffId: 'S-04499', name: 'Yaa Pokua Adjei', email: 'yaa.adjei@example.com', department: 'Finance', position: 'Senior Accountant', dob: '1990-07-21', retire: '2050-07-21', employed: '2016-02-01' }
+  { employeeNo: 'E-04417', staffId: 'S-04417', name: 'Ama Serwaa Owusu', email: 'ama.owusu@example.com', department: 'Operations', position: 'Operations Manager', dob: '1988-03-14', retire: '2048-03-14', employed: '2015-01-05', netSalary: 34000, allowances: 6500, personal: 1800, mortgageHp: 0 },
+  { employeeNo: 'E-04499', staffId: 'S-04499', name: 'Yaa Pokua Adjei', email: 'yaa.adjei@example.com', department: 'Finance', position: 'Senior Accountant', dob: '1990-07-21', retire: '2050-07-21', employed: '2016-02-01', netSalary: 31000, allowances: 4500, personal: 1500, mortgageHp: 0 }
 ];
 
 const PEOPLE: Record<Role, { name: string; email: string }> = {
@@ -206,7 +210,7 @@ export class MockAdvanceFlowClient implements AdvanceFlowClient, DevControls {
     const credit = c.tasks.filter(function (t) { return t.title === 'Credit recommendation'; })[0];
     const blockers = fitToLendBlockers(c, prop, val).filter(function (b) { return b !== 'Collateral checklist is incomplete.'; });
     if (blockers.length === 0 && (!credit || credit.status === 'DONE')) {
-      c.approvals = buildApprovals(c.amountRequested, false, new Date());
+      c.approvals = buildApprovals(c.amountRequested, !!(c.eligibility && c.eligibility.exceptionalApproval), new Date());
       this.setState(c, 'IN_APPROVAL', 'Approval routed by tier.');
       this.notify(c, 'Approval required', 'Case ' + c.ref + ' is waiting for approval.');
     }
@@ -399,6 +403,35 @@ export class MockAdvanceFlowClient implements AdvanceFlowClient, DevControls {
 
   async getReadiness(id: string): Promise<ReadinessResult> {
     return clone(this.refreshReadiness(this.find(id)));
+  }
+
+  /* ---------------- loan eligibility ---------------- */
+
+  async requestOtp(accountNumber: string): Promise<{ sent: boolean; maskedPhone: string }> {
+    if (!/^\d{13}$/.test(accountNumber)) { fail('Enter the 13-digit account number.'); }
+    return { sent: true, maskedPhone: '024 *** ' + this.persona.employeeNo.slice(-3) + ' (demo code 123456)' };
+  }
+
+  async verifyOtp(accountNumber: string, code: string): Promise<StaffProfile> {
+    if (!/^\d{13}$/.test(accountNumber)) { fail('Enter the 13-digit account number.'); }
+    if (code !== '123456') { fail('That code is not correct. In this demo the code is 123456.'); }
+    const p = this.persona;
+    return { fullName: p.name, dateOfBirth: p.dob, netSalary: p.netSalary, allowances: p.allowances, instalmentPersonal: p.personal, instalmentMortgageHp: p.mortgageHp };
+  }
+
+  async computeEligibility(caseId: string, input: EligibilityInput, exceptionalApproval: boolean): Promise<EligibilityResult> {
+    const c = this.find(caseId);
+    const policy = { interestRatePct: POLICY.defaultRatePct, dirLimitPct: POLICY.maxDsrPct, maxTenorMonths: POLICY.maxTenorYears[input.loanType] * 12, retirementAge: 60 };
+    const result = computeEligibility(input, policy, new Date());
+    c.eligibility = { input, result, exceptionalApproval: exceptionalApproval && result.exceptionalApprovalAllowed };
+    c.amountRequested = input.loanAmount;
+    c.tenorYears = Math.max(1, Math.floor(result.tenorMonths / 12));
+    c.ratePct = result.interestRatePct;
+    c.financials = { ...c.financials, basicSalary: input.netSalary, allowances: input.allowances, deductions: 0, existingLoanRepayments: input.instalmentPersonal + input.instalmentMortgageHp };
+    c.applicant = { ...c.applicant, dateOfBirth: input.dateOfBirth || c.applicant.dateOfBirth };
+    this.audit(c, 'Eligibility computed', result.decisionRule.toLowerCase().replace(/_/g, ' ') + ' · DIR ' + result.dirAllStaffLoansPct.toFixed(1) + '% · qualifies for ' + Math.round(result.loanAmountQualifiedFor).toLocaleString('en-GB') + (c.eligibility.exceptionalApproval ? ' · exceptional approval requested' : ''));
+    this.refreshReadiness(c);
+    return clone(result);
   }
 
   /* ---------------- tasks ---------------- */

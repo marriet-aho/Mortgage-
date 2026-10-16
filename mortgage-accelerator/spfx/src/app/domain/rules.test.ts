@@ -5,6 +5,7 @@ import {
   approvalPlan,
   approvalsComplete,
   buildApprovals,
+  computeEligibility,
   conditionTemplates,
   disbursementBlockers,
   dsrPct,
@@ -269,5 +270,36 @@ describe('equity payee rules', () => {
     expect(equityPayeeRule('TUITION').staged).toBe(false);
     expect(equityPayeeRule('MEDICAL').payee).toMatch(/direct/);
     expect(equityPayeeRule('HOME_RENOVATION').staged).toBe(true);
+  });
+});
+
+describe('loan eligibility (Staff Loan step)', () => {
+  const policy = { interestRatePct: 18, dirLimitPct: 50, maxTenorMonths: 360, retirementAge: 60 };
+  const base = { loanType: 'HOME_PURCHASE' as const, accountNumber: '1234567890123', dateOfBirth: '1988-03-14', netSalary: 30000, allowances: 5000, loanAmount: 300000, instalmentPersonal: 1500, instalmentMortgageHp: 0, payOffExistingLoans: false };
+
+  it('is eligible when DIR is within the limit and the amount is qualified', () => {
+    const r = computeEligibility(base, policy, NOW);
+    expect(r.decisionRule).toBe('ELIGIBLE');
+    expect(r.dirAllStaffLoansPct).toBeLessThanOrEqual(50);
+    expect(r.tenorMonths).toBe(257); // 60th birthday is in March 2048
+    expect(r.exceptionalApprovalAllowed).toBe(false);
+  });
+  it('limits the tenor by retirement at 60', () => {
+    expect(computeEligibility({ ...base, dateOfBirth: '1971-10-12' }, policy, NOW).tenorMonths).toBe(60);
+  });
+  it('flags a DIR above the limit and allows exceptional approval', () => {
+    const r = computeEligibility({ ...base, loanAmount: 1500000 }, policy, NOW);
+    expect(r.decisionRule).toBe('EXCEEDS_DIR_LIMIT');
+    expect(r.exceptionalApprovalAllowed).toBe(true);
+    expect(r.loanAmountQualifiedFor).toBeLessThan(1500000);
+  });
+  it('paying off existing loans lowers DIR and raises the qualifying amount', () => {
+    const keep = computeEligibility({ ...base, instalmentPersonal: 9000 }, policy, NOW);
+    const off = computeEligibility({ ...base, instalmentPersonal: 9000, payOffExistingLoans: true }, policy, NOW);
+    expect(off.dirAllStaffLoansPct).toBeLessThan(keep.dirAllStaffLoansPct);
+    expect(off.loanAmountQualifiedFor).toBeGreaterThan(keep.loanAmountQualifiedFor);
+  });
+  it('does not compute without figures', () => {
+    expect(computeEligibility({ ...base, netSalary: 0, allowances: 0 }, policy, NOW).decisionRule).toBe('NOT_ELIGIBLE');
   });
 });
