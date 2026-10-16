@@ -9,9 +9,10 @@ import { minDownPayment } from '../domain/rules';
 import { DraftPatch } from '../services/client';
 import { EquityPurpose, MortgageCase, PRODUCT_LABEL, ProductCode } from '../domain/types';
 import { money } from '../format';
-import { EligibilityPhase } from './EligibilityPhase';
+import { PreApprovalPack } from '../components/preApprovalPack';
+import { LinkLoanPhase } from './LinkLoanPhase';
 
-const PHASES = ['Loan Eligibility', 'Loan Application', 'Finish'];
+const PHASES = ['Link Advance Flow loan', 'Mortgage application', 'Finish'];
 
 /** The same three-phase header the existing Staff Loan flow uses. */
 function PhaseBar(p: { phase: number }): JSX.Element {
@@ -109,6 +110,8 @@ function stepErrors(c: MortgageCase, f: FormValues, stepId: string): Errors {
     if (!(c.valuationRequest && c.valuationRequest.sentAt)) { e.valuation_sent = 'Send the valuation form to the Collateral Maintenance Unit'; }
     if (c.product === 'HOME_PURCHASE' && !(c.searchRequest && c.searchRequest.sentAt)) { e.search_sent = 'Send the search request to the Mortgage Unit'; }
   }
+  if (stepId === 'employment' && !str(f, 'sig_references')) { e.sig_references = 'Sign the Personal Reference Form'; }
+  if (stepId === 'documents' && f.af_step2_confirmed !== true) { e.af_step2_confirmed = 'Confirm that the pre-approval documents are attached in Advance Flow (Create Staff Loan, Step 2)'; }
   if (stepId === 'consent') {
     if (!(f.consent_a === true && f.consent_b === true && f.consent_c === true && f.consent_d === true)) { e.consent = 'Tick all four consents (a to d)'; }
     if (!str(f, 'sig_consent')) { e.sig_consent = 'Sign the consent letter'; }
@@ -133,6 +136,7 @@ export function WizardPage(): JSX.Element {
   const [phase, setPhase] = React.useState(0);
   const [doneRef, setDoneRef] = React.useState('');
   const [docsPct, setDocsPct] = React.useState(0);
+  const [searchReady, setSearchReady] = React.useState(false);
   const [form, setForm] = React.useState<FormValues>({});
   const timer = React.useRef<number | undefined>(undefined);
   const pending = React.useRef<DraftPatch>({});
@@ -152,8 +156,11 @@ export function WizardPage(): JSX.Element {
   // keep the document completeness in step with uploads
   React.useEffect(function () {
     if (!c) { return; }
-    app.client.listDocuments(c.id).then(function (docs) { setDocsPct(documentCompleteness(c, docs).pct); });
-  }, [c && c.id, step, app.version]); // eslint-disable-line react-hooks/exhaustive-deps
+    app.client.listDocuments(c.id).then(function (docs) {
+      setDocsPct(documentCompleteness({ ...c, form }, docs).pct);
+      setSearchReady(['TITLE_DOCS', 'SITE_PLAN'].every(function (t) { return docs.some(function (d) { return d.docType === t; }); }));
+    });
+  }, [c && c.id, step, app.version, form.af_step2_confirmed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) { return <ErrorNote message={error} />; }
   if (!c) { return <Loading />; }
@@ -231,7 +238,6 @@ export function WizardPage(): JSX.Element {
 
   const submit = function (): void {
     for (let i = 0; i < LAST - 1; i++) {
-      if (i === 6) { continue; }
       const e = stepErrors(c, form, STEP_IDS[i]);
       if (Object.keys(e).length) { setStep(i); setErrors(e); app.toast('Step ' + (i + 1) + ' needs attention.'); return; }
     }
@@ -252,9 +258,9 @@ export function WizardPage(): JSX.Element {
   if (phase === 0) {
     return (
       <>
-        <Head title={'Apply: ' + PRODUCT_LABEL[c.product]} sub="Start with your eligibility. It uses the same Staff Loan check you already know, then carries your figures into the application." />
+        <Head title={'Apply: ' + PRODUCT_LABEL[c.product]} sub="Your eligibility and pre-approval documents are handled in Advance Flow (Create Staff Loan). Link that loan to continue." />
         <PhaseBar phase={0} />
-        <EligibilityPhase c={c} product={product} onProductChange={function (pr) { app.go('/apply/' + (pr === 'HOME_PURCHASE' ? 'purchase' : 'equity')); }} onDone={function () {
+        <LinkLoanPhase c={c} onDone={function () {
           app.client.getCase(c.id).then(function (d) { setC(d); setPhase(1); window.scrollTo(0, 0); }, function (e) { app.toast(String(e)); });
         }} />
       </>
@@ -319,7 +325,7 @@ export function WizardPage(): JSX.Element {
             <>
               <ValuationSection f={form} set={setField} errs={errors} sent={c.valuationRequest && c.valuationRequest.sentAt} signer={c.applicant.fullName} canSend={!!str(form, 'sig_valuation') && VALUATION_FORM.fields.every(function (d) { return !d.req || !!str(form, d.key).trim(); })} onSend={function () { send('valuation'); }} />
               {errors.valuation_sent ? <span style={{ color: '#A04000', fontWeight: 600 }}>{errors.valuation_sent}</span> : null}
-              <SearchSection sent={c.searchRequest && c.searchRequest.sentAt} ready onSend={function () { send('search'); }} />
+              <SearchSection sent={c.searchRequest && c.searchRequest.sentAt} ready={searchReady} onSend={function () { send('search'); }} upload={<DocumentsPanel c={c} canUpload canRequest={false} only={['TITLE_DOCS', 'SITE_PLAN']} />} />
               {errors.search_sent ? <span style={{ color: '#A04000', fontWeight: 600 }}>{errors.search_sent}</span> : null}
             </>
           ) : null}
@@ -330,7 +336,7 @@ export function WizardPage(): JSX.Element {
               <Panel title="Co-borrower"><div className="small muted">A Co-Borrower is added in step 1 (“There is a Co-Borrower”). They receive a secure link to verify and sign separately.</div></Panel>
             </>
           ) : null}
-          {step === 6 ? <DocumentsPanel c={c} canUpload canRequest={false} /> : null}
+          {step === 6 ? <PreApprovalPack c={c} f={form} set={setField} /> : null}
           {step === 7 && r ? (
             <>
               <ReadinessPanel result={r} />

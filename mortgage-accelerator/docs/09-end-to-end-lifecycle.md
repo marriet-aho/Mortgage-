@@ -13,17 +13,14 @@ sequenceDiagram
   participant U as Staff units
   A->>W: Open Mortgage Accelerator
   W->>AF: createDraft(product)
-  A->>W: Account number, OTP
-  W->>AF: requestOtp, verifyOtp
-  AF-->>W: staff profile from payroll
-  A->>W: Compute eligibility
-  W->>AF: computeEligibility
+  A->>AF: Create Staff Loan: Step 1 eligibility, Step 2 pre-approval documents
+  A->>W: Link Advance Flow loan number
+  W->>AF: linkLoan (read eligibility result)
   AF-->>W: DIR, qualified amount, decision rule
-  A->>W: Loan application: forms, consent
+  A->>W: Mortgage application form, valuation form, consent letter (e-signed)
   W->>AF: saveDraft (autosave)
-  A->>W: Upload documents
+  A->>W: Title certificate and site plan for the search
   W->>S: file to Case Documents library
-  W->>AF: register document reference
   A->>W: Submit
   W->>AF: submitCase
   AF->>AF: reference, lock, start workflow
@@ -50,7 +47,7 @@ sequenceDiagram
 
 | # | State | What happens | Owner | Exit gate | Clock |
 |---|---|---|---|---|---|
-| 1 | Draft | Eligibility (account number, OTP, compute); application forms, consent, documents; autosave | Applicant | Submit passes validation, no hard stop, all required documents | None |
+| 1 | Draft | Link the Advance Flow loan (eligibility and Step 2 documents stay in Advance Flow); application form, valuation and search requests, consent, e-signatures; autosave | Applicant | Submit passes validation, no hard stop, signed forms filed, Step 2 documents confirmed | None |
 | 2 | Pre-approval | Reference number, case locked, HR verification, bureau, affordability, risk, score | System, HR | Readiness decision | SLA-01, 24 hours |
 | 2a | Referred | A Credit officer decides | Credit | Pre-approve or decline with reason | SLA-04 |
 | 3 | Pre-approved | Applicant confirms to proceed | Applicant | Confirmation (BR-06) | Validity 90 or 60 days |
@@ -135,7 +132,7 @@ flowchart LR
 | Check | Result |
 |---|---|
 | Business rules and eligibility maths | 35 unit tests, all passing |
-| Lifecycle in the mock client: every gate, four-eyes, locks, returns, rejections, SLA pause and resume, real-time events, OTP | 13 tests, all passing |
+| Lifecycle in the mock client: every gate, four-eyes, locks, returns, rejections, SLA pause and resume, real-time events, OTP | 15 tests, all passing |
 | Every page for every role | 364 page loads, no error |
 | The whole lifecycle through the browser, by each role in turn | Draft to Closed, no console errors |
 | SPFx production bundle and `.sppkg` | Built with the real SPFx 1.18.2 toolchain on Node 18 |

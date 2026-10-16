@@ -93,7 +93,7 @@ export function TrackingPanel(p: { c: MortgageCase }): JSX.Element {
 
 /* ---------------- documents ---------------- */
 
-export function DocumentsPanel(p: { c: MortgageCase; canUpload: boolean; canRequest: boolean }): JSX.Element {
+export function DocumentsPanel(p: { c: MortgageCase; canUpload: boolean; canRequest: boolean; only?: string[] }): JSX.Element {
   const app = useApp();
   const act = useAction();
   const docs = useAsync(function () { return app.client.listDocuments(p.c.id); }, [p.c.id]);
@@ -103,9 +103,11 @@ export function DocumentsPanel(p: { c: MortgageCase; canUpload: boolean; canRequ
   if (docs.loading || reqs.loading) { return <Loading />; }
   if (docs.error) { return <ErrorNote message={docs.error} />; }
   const list = docs.data || [];
-  const required = requiredSpecs(p.c);
-  const optional = preApprovalSpecs(p.c).filter(function (s) { return required.indexOf(s) < 0; });
-  const later = postApprovalSpecs(p.c);
+  const only = p.only;
+  const keep = function (s: { docType: string }): boolean { return !only || only.indexOf(s.docType) >= 0; };
+  const required = requiredSpecs(p.c).filter(keep);
+  const optional = preApprovalSpecs(p.c).filter(keep).filter(function (s) { return required.indexOf(s) < 0; });
+  const later = only ? [] : postApprovalSpecs(p.c);
 
   const upload = function (docType: string, category: (typeof DOC_SPECS)[0]['category'], files: FileList | null): void {
     if (!files || !files.length) { return; }
@@ -136,7 +138,7 @@ export function DocumentsPanel(p: { c: MortgageCase; canUpload: boolean; canRequ
     return (
       <tr key={s.docType}>
         <td><b>{s.label}</b><div className="small muted">{s.hint}</div></td>
-        <td>{last ? <Chip tone="dark">v{last.version} attached</Chip> : asked ? <Chip tone="orange">Requested · due {fmtDate(asked.dueDate)}</Chip> : s.required(p.c) ? <Chip tone="solid">Missing</Chip> : <Chip tone="idle">Optional</Chip>}</td>
+        <td>{last ? <Chip tone="dark">v{last.version} attached</Chip> : s.owner === 'AF' && p.c.form && p.c.form.af_step2_confirmed === true ? <Chip tone="dark">Attached in Advance Flow</Chip> : asked ? <Chip tone="orange">Requested · due {fmtDate(asked.dueDate)}</Chip> : s.required(p.c) ? <Chip tone="solid">Missing</Chip> : <Chip tone="idle">Optional</Chip>}</td>
         <td className="small">{last ? <><div>{last.fileName}</div><div className="muted">{last.sizeKb} KB · {last.classification.toLowerCase()} · {relTime(last.uploadedAt)}</div></> : '—'}</td>
         <td className="right">
           {p.canUpload && app.files.demo ? <Button small onClick={function () { void act(function () { return attachSample(s.docType, s.category); }, s.label + ' attached (sample).'); }}>Attach sample</Button> : null}{' '}
@@ -154,8 +156,7 @@ export function DocumentsPanel(p: { c: MortgageCase; canUpload: boolean; canRequ
   return (
     <div className="ma-stack">
       {p.canUpload && app.files.demo ? <Note><b>Demo.</b> Some preview windows block the file picker. Use <b>Attach sample</b> on any row, or <Button small onClick={attachAllSamples}>Attach samples for all required documents</Button> to move on.</Note> : null}
-      <Section title={'Pre-approval documents (' + required.length + ' required)'}>
-        <div className="small muted" style={{ marginBottom: 8 }}>Each row below is its own upload. Attach them to the loan request in Advance Flow as well.</div>
+      <Section title={only ? 'Upload' : 'Documents (' + required.length + ' required)'}>
         <div className="ma-tw"><table className="ma-t"><thead><tr><th>Document</th><th>Status</th><th>File</th><th /></tr></thead>
           <tbody>{required.map(row)}</tbody></table></div>
       </Section>

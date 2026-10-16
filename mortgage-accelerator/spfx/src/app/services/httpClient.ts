@@ -14,9 +14,6 @@ import {
   ConditionStatus,
   Disbursement,
   DocCategory,
-  EligibilityInput,
-  EligibilityResult,
-  StaffProfile,
   DocRef,
   DocRequest,
   FitToLend,
@@ -112,11 +109,9 @@ export class HttpAdvanceFlowClient implements AdvanceFlowClient {
   returnCase(id: string, note: string) { return this.post<MortgageCase>('/cases/' + id + '/return', { note }); }
   getReadiness(id: string) { return this.get<ReadinessResult>('/cases/' + id + '/readiness'); }
 
-  /** Maps to the existing Staff Loan eligibility endpoints. Confirm the paths against the Advance Flow API reference. */
-  requestOtp(accountNumber: string) { return this.post<{ sent: boolean; maskedPhone: string }>('/eligibility/otp', { accountNumber }); }
-  verifyOtp(accountNumber: string, code: string) { return this.post<StaffProfile>('/eligibility/verify', { accountNumber, code }); }
-  computeEligibility(caseId: string, input: EligibilityInput, exceptionalApproval: boolean) {
-    return this.post<EligibilityResult>('/cases/' + caseId + '/eligibility', { input, exceptionalApproval });
+  /** Reads the Advance Flow loan (eligibility result, documents) into the case. Confirm the path against the Advance Flow API reference. */
+  linkLoan(caseId: string, loanNumber: string, accountNumber: string, opts?: { loanAmount?: number; exceptionalApproval?: boolean }) {
+    return this.post<MortgageCase>('/cases/' + caseId + '/link-loan', { loanNumber, accountNumber, ...(opts || {}) });
   }
 
   listTasks(f?: { role?: Role; caseId?: string; open?: boolean }) {

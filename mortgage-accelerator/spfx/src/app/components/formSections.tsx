@@ -51,7 +51,7 @@ export function FormSection(p: { id: string; product: ProductCode; f: FormValues
           return one(d, d.key, p.f, p.set, p.errs, '');
         })}
       </div>
-      {p.id === 'references' ? <References f={p.f} set={p.set} errs={p.errs} /> : null}
+      {p.id === 'references' ? <References f={p.f} set={p.set} errs={p.errs} name={p.f.b_first_name ? (str(p.f, 'b_first_name') + ' ' + str(p.f, 'b_last_name')).trim() : 'Borrower'} /> : null}
       {p.id === 'insurance' ? <InsuranceRows f={p.f} set={p.set} /> : null}
       {p.id === 'type' && p.product === 'EQUITY_RELEASE' && p.f.pension_backed === 'yes' ? (
         <Note><b>Pension-backed.</b><ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>{PENSION_CHECKLIST.map(function (t) { return <li key={t}>{t}</li>; })}</ul></Note>
@@ -60,7 +60,7 @@ export function FormSection(p: { id: string; product: ProductCode; f: FormValues
   );
 }
 
-function References(p: { f: FormValues; set: Set; errs: Errs }): JSX.Element {
+function References(p: { f: FormValues; set: Set; errs: Errs; name: string }): JSX.Element {
   return (
     <div style={{ marginTop: 12 }} className="ma-stack">
       {REFERENCE_ROWS.map(function (r) {
@@ -75,6 +75,8 @@ function References(p: { f: FormValues; set: Set; errs: Errs }): JSX.Element {
           </Panel>
         );
       })}
+      <div className="small" style={{ marginTop: 4 }}>I/We do hereby certify that the information given above is true and accurate.</div>
+      <SignaturePad id="sig-references" label="Signature" signerName={p.name} value={p.f.sig_references} error={p.errs.sig_references} onChange={function (v) { p.set({ sig_references: v }); }} />
     </div>
   );
 }
@@ -121,8 +123,8 @@ export function AssetsSection(p: { f: FormValues; set: Set }): JSX.Element {
   };
   return (
     <>
-      {block('asset', ASSET_ROWS, 'ASSETS', 'Description of asset', 'Value')}
-      {block('liab', LIABILITY_ROWS, 'LIABILITIES', 'Description of liability', 'Outstanding balance')}
+      {block('asset', ASSET_ROWS, 'ASSETS', 'Type of Asset', 'Value (in Cedis)')}
+      {block('liab', LIABILITY_ROWS, 'LIABILITITES', 'Type of Liability', 'Value (in Cedis)')}
     </>
   );
 }
@@ -143,13 +145,14 @@ export function ValuationSection(p: { f: FormValues; set: Set; errs: Errs; sent?
   );
 }
 
-export function SearchSection(p: { sent?: string; onSend: () => void; ready: boolean }): JSX.Element {
+export function SearchSection(p: { sent?: string; onSend: () => void; ready: boolean; upload?: React.ReactNode }): JSX.Element {
   return (
     <Section title="SEARCH REPORT REQUEST">
-      <div className="small muted" style={{ marginBottom: 8 }}>Step 2 of the bank&rsquo;s process. The Mortgage Unit conducts a search report on the property from the Land Title Certificate and the Personalized site plan. Upload both in Pre-approval documents first.</div>
+      <div className="small muted" style={{ marginBottom: 8 }}>Step 2 of the bank&rsquo;s process. The Mortgage Unit conducts a search report on the property from the Land Title Certificate and the Personalized site plan. Upload both below, then send.</div>
+      {p.upload}
       <div className="ma-row">
         <Button primary disabled={!p.ready || !!p.sent} onClick={p.onSend}>{p.sent ? 'Sent to the Mortgage Unit' : 'Send to the Mortgage Unit'}</Button>
-        {!p.ready ? <span className="small muted">Upload the Land Title Certificate first.</span> : null}
+        {!p.ready ? <span className="small muted">Upload the Land Title Certificate and the Personalized site plan first.</span> : null}
       </div>
     </Section>
   );

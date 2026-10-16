@@ -436,6 +436,8 @@ export interface MortgageCase {
   ref: string;
   /** The loan account number in core banking, set when the mortgage account is activated. */
   accountNumber?: string;
+  /** The loan number Advance Flow issued in Create Staff Loan. */
+  afLoanNumber?: string;
   product: ProductCode;
   state: CaseState;
   applicant: Applicant;

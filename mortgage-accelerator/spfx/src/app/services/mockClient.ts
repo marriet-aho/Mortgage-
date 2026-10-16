@@ -32,7 +32,6 @@ import {
   Disbursement,
   EligibilityInput,
   EligibilityResult,
-  StaffProfile,
   DocCategory,
   DocRef,
   DocRequest,
@@ -421,20 +420,25 @@ export class MockAdvanceFlowClient implements AdvanceFlowClient, DevControls {
 
   /* ---------------- loan eligibility ---------------- */
 
-  async requestOtp(accountNumber: string): Promise<{ sent: boolean; maskedPhone: string }> {
-    if (!/^\d{13}$/.test(accountNumber)) { fail('Enter the 13-digit account number.'); }
-    return { sent: true, maskedPhone: '024 *** ' + this.persona.employeeNo.slice(-3) + ' (demo code 123456)' };
-  }
-
-  async verifyOtp(accountNumber: string, code: string): Promise<StaffProfile> {
-    if (!/^\d{13}$/.test(accountNumber)) { fail('Enter the 13-digit account number.'); }
-    if (code !== '123456') { fail('That code is not correct. In this demo the code is 123456.'); }
-    const p = this.persona;
-    return { fullName: p.name, dateOfBirth: p.dob, netSalary: p.netSalary, allowances: p.allowances, instalmentPersonal: p.personal, instalmentMortgageHp: p.mortgageHp };
-  }
-
-  async computeEligibility(caseId: string, input: EligibilityInput, exceptionalApproval: boolean): Promise<EligibilityResult> {
+  /** Stands in for reading the Advance Flow loan: the figures below are what Create Staff Loan Step 1 would hold. */
+  async linkLoan(caseId: string, loanNumber: string, accountNumber: string, opts?: { loanAmount?: number; exceptionalApproval?: boolean }): Promise<MortgageCase> {
+    if (!/^\d{13}$/.test(accountNumber)) { fail('Enter the 13-digit account number you used in Advance Flow.'); }
+    if (loanNumber.trim().length < 3) { fail('Enter the loan number shown in Advance Flow (My Loans).'); }
     const c = this.find(caseId);
+    const p = this.persona;
+    const input: EligibilityInput = {
+      loanType: c.product, accountNumber, dateOfBirth: p.dob, netSalary: p.netSalary, allowances: p.allowances,
+      loanAmount: (opts && opts.loanAmount) || (c.product === 'HOME_PURCHASE' ? 400000 : 300000),
+      instalmentPersonal: p.personal, instalmentMortgageHp: p.mortgageHp, payOffExistingLoans: false
+    };
+    this.applyEligibility(c, input, !!(opts && opts.exceptionalApproval));
+    c.afLoanNumber = loanNumber.trim();
+    c.accountNumber = accountNumber;
+    this.audit(c, 'Linked to Advance Flow loan', loanNumber.trim());
+    return clone(c);
+  }
+
+  private applyEligibility(c: MortgageCase, input: EligibilityInput, exceptionalApproval: boolean): EligibilityResult {
     const policy = { interestRatePct: POLICY.defaultRatePct, dirLimitPct: POLICY.maxDsrPct, maxTenorMonths: POLICY.maxTenorYears[input.loanType] * 12, retirementAge: 60 };
     const result = computeEligibility(input, policy, new Date());
     c.eligibility = { input, result, exceptionalApproval: exceptionalApproval && result.exceptionalApprovalAllowed };
@@ -445,7 +449,7 @@ export class MockAdvanceFlowClient implements AdvanceFlowClient, DevControls {
     c.applicant = { ...c.applicant, dateOfBirth: input.dateOfBirth || c.applicant.dateOfBirth };
     this.audit(c, 'Eligibility computed', result.decisionRule.toLowerCase().replace(/_/g, ' ') + ' · DIR ' + result.dirAllStaffLoansPct.toFixed(1) + '% · qualifies for ' + Math.round(result.loanAmountQualifiedFor).toLocaleString('en-GB') + (c.eligibility.exceptionalApproval ? ' · exceptional approval requested' : ''));
     this.refreshReadiness(c);
-    return clone(result);
+    return result;
   }
 
   /* ---------------- tasks ---------------- */

@@ -48,7 +48,7 @@ A page the role cannot open shows "You do not have access", and the API enforces
 |---|---|---|---|
 | `#/` | Home | Applicant: your applications, what needs you, start a mortgage. Staff: KPIs, your queue, conditions needing attention, modules | Open case, start application |
 | `#/purchase`, `#/equity` | Product pages | Rules, documents, journey, cases on the product | Start application, check readiness |
-| `#/apply/purchase`, `#/apply/equity` | Application wizard | **Loan Eligibility** (account number, OTP, compute, results, exceptional approval), **Loan Application** in six steps with autosave and live readiness, **Finish** | Send OTP, compute, save, upload, sign, submit |
+| `#/apply/purchase`, `#/apply/equity` | Application wizard | **Link Advance Flow loan**, then the bank's Mortgage Application Form in eight steps (personal, employment and references, existing mortgages and assets, property, valuation and search requests, consent and declaration, pre-approval documents, review) with e-signatures and autosave, then **Finish** | Link loan, save, send valuation and search requests, sign, confirm Step 2 documents, submit |
 | `#/readiness` | Readiness check | What-if figures run through the same rules; start an application with them | Start with these figures |
 | `#/cases` | Case list | Same pattern as the existing Collateral Release screen: search by loan or reference number, Product and Status filters, Reset, Refresh; reference, loan account, product, amount, status, SLA columns | Open case |
 | `#/cases/:id?tab=` | Case workspace | Summary, Forms, Documents, Tasks, Approvals, Property and valuation, Conditions, Disbursement, Collaboration, Audit | Confirm and proceed, sign and accept offer, return for correction, withdraw, request document, complete task, decide approval, verify condition, request disbursement |
@@ -66,22 +66,18 @@ A page the role cannot open shows "You do not have access", and the API enforces
 
 ## 4.4 Key screens
 
-### Loan Eligibility (mirrors the existing Staff Loan screen)
+### Link Advance Flow loan (replaces a second eligibility step)
 
 ```
- (1) Loan Eligibility ──── (2) Loan Application ──── (3) Finish
+ (1) Link Advance Flow loan ──── (2) Mortgage application ──── (3) Finish
 +---------------------------------------------+  +-------------------------------+
-| Step 1 — Loan Eligibility                    |  | Computation Results           |
-| Account number [1234567890123]  Loan type [v]|  |  Interest Rate (p.a.)  18.00% |
-| [Send OTP] [code] [Verify]                   |  |  DIR Limit             50.00% |
-| Date of birth (from payroll)  Net salary     |  |  Tenor (Months)          285  |
-| Allowances (Rent + Clothing)  Loan amount    |  |  Periodic Instalment  6,087   |
-| Instalment (Personal+Auto+Education)         |  |  DIR (Capital + Personal) 17% |
-| Instalment (Mortgage + HP only)              |  |  DIR (All Staff Loans)    21% |
-| [ ] Pay off existing loans?                  |  |  Loan Amount Qualified For    |
-| [Compute Eligibility] [Reset]                |  |  Decision Rule        Eligible |
-+---------------------------------------------+  | [ ] Exceptional Approval       |
-                                                  | [Next Step]                    |
+| Before you start                             |  | Loan eligibility (Advance Flow)|
+|  1 Valuation form, 2 Search, 3 Create Staff  |  |  Interest Rate (p.a.)    6.00% |
+|  Loan Step 1 and Step 2, 4 come back         |  |  DIR Limit              50.00% |
+| Link your Advance Flow loan                  |  |  Tenor (Months)          240   |
+|  Loan number [SL-2026-0042]                  |  |  DIR (All Staff Loans)   12.3% |
+|  Account Number [1234567890123]  [Link loan] |  |  Loan Amount Qualified For     |
++---------------------------------------------+  |  Decision Rule        Eligible |
                                                   +-------------------------------+
 ```
 

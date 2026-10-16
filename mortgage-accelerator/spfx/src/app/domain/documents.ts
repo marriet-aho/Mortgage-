@@ -2,9 +2,13 @@ import { DocCategory, DocRef, MortgageCase } from './types';
 
 export type DocStage = 'PRE' | 'POST';
 
+/** MODULE: collected here. AF: attached in Advance Flow, Create Staff Loan Step 2 (pre-approval). */
+export type DocOwner = 'MODULE' | 'AF';
+
 export interface DocCtx {
   product: MortgageCase['product'];
   applicant: Pick<MortgageCase['applicant'], 'maritalStatus'>;
+  form?: { [key: string]: string | boolean };
   purchase?: Pick<NonNullable<MortgageCase['purchase']>, 'vendorType'>;
 }
 
@@ -15,6 +19,7 @@ export interface DocSpec {
   category: DocCategory;
   hint: string;
   stage: DocStage;
+  owner: DocOwner;
   /** Shown as its own upload section on the application. */
   required: (c: DocCtx) => boolean;
   /** Visible to the applicant at all (optional rows still get an upload section). */
@@ -28,11 +33,14 @@ const MARRIED = (c: DocCtx): boolean => c.applicant.maritalStatus === 'MARRIED';
 const always = (): boolean => true;
 const never = (): boolean => false;
 
+/** Collected in the module because Advance Flow does not take them: the signed forms and the search request pack. */
+const MODULE_OWNED = ['APPLICATION_FORM', 'CONSENT_FORM', 'TITLE_DOCS', 'SITE_PLAN'];
+
 function pre(docType: string, label: string, category: DocCategory, hint: string, required: (c: DocCtx) => boolean, applies?: (c: DocCtx) => boolean): DocSpec {
-  return { docType, label, category, hint, stage: 'PRE', required, applies: applies || always };
+  return { docType, label, category, hint, stage: 'PRE', owner: MODULE_OWNED.indexOf(docType) >= 0 ? 'MODULE' : 'AF', required, applies: applies || always };
 }
 function post(docType: string, label: string, category: DocCategory, hint: string, required: (c: DocCtx) => boolean, applies?: (c: DocCtx) => boolean): DocSpec {
-  return { docType, label, category, hint, stage: 'POST', required: never, applies: applies || required };
+  return { docType, label, category, hint, stage: 'POST', owner: 'MODULE', required: never, applies: applies || required };
 }
 
 /**
@@ -48,6 +56,7 @@ export const DOC_SPECS: DocSpec[] = [
   pre('REQUEST_LETTER', 'Request Letter for Equity Release Mortgage Facility', 'APPLICATION', 'Addressed to the bank, stating the purpose', ER),
   pre('OFFER_LETTER', 'A copy of the Offer letter / sales and purchases agreement', 'PROPERTY', 'From the vendor or developer', HP),
   pre('DOWN_PAYMENT_RECEIPT', 'Receipt of the down payment made to the vendor if available', 'PROPERTY', 'If you have already paid', never, HP),
+  pre('SITE_PLAN', 'Personalized site plan on the subject property', 'PROPERTY', 'Sent with the Land Title Certificate to the Mortgage Unit for the search report', always),
   pre('VALUATION_REPORT', 'Valuation report (from FBGL recommended valuer)', 'COLLATERAL', 'Ordered through the Collateral Maintenance Unit: upload when received', always),
   pre('TITLE_DOCS', 'Title documents to the property / Land Title Certificate', 'PROPERTY', 'Also sent to the Mortgage Unit for the search report', always),
   pre('PASSPORT_PHOTO', 'Passport size picture', 'IDENTITY', '1 picture', always),
@@ -88,7 +97,8 @@ export function documentCompleteness(
   c: DocCtx,
   docs: DocRef[]
 ): { pct: number; missing: DocSpec[] } {
-  const req = requiredSpecs(c);
+  const afDone = !!c.form && c.form.af_step2_confirmed === true;
+  const req = requiredSpecs(c).filter(function (s) { return !(afDone && s.owner === 'AF'); });
   const missing = req.filter(function (s) {
     return !docs.some(function (d) { return d.docType === s.docType; });
   });

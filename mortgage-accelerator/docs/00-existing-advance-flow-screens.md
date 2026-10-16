@@ -13,7 +13,7 @@ Everything below is captured **exactly as it appears** in the screenshots of the
 | Search | "Search app by name" |
 | App tile | **Advance Flow**, "Fidelity Bank LOS", badge **Active** |
 
-Advance Flow is opened from this launcher. Question: does Unified Access Management sign in through Microsoft Entra ID? The module uses Entra ID tokens, and the Advance Flow API must accept them.
+Advance Flow is opened from this launcher. **Confirmed:** Unified Access Management signs in through Microsoft, so the module's Entra ID sign-in matches. The Advance Flow API must still accept the module's Entra ID token (to confirm with the Advance Flow team).
 
 ### Advance Flow: left menu
 
@@ -33,7 +33,7 @@ Advance Flow is opened from this launcher. Question: does Unified Access Managem
 
 ### Create Staff Loan (three phases: 1 Loan Eligibility, 2 Loan Application, 3 Finish)
 
-Page title "Create Staff Loan", sub-title "Staff Loan Application". **Only Step 1 has been captured. Steps 2 and 3 are still needed.**
+Page title "Create Staff Loan", sub-title "Staff Loan Application". **Step 1 was captured. You have confirmed that Step 2 (Loan Application) is where all the pre-approval documents are attached. Its screenshots are still wanted for the exact fields. Step 3 (Finish) is not yet seen.**
 
 **Step 1: Loan Eligibility, left side**
 
@@ -124,5 +124,13 @@ Rule: if Advance Flow already does it, the module reads from it or links to it a
 | 1 | Screenshots of **Create Staff Loan Step 2 (Loan Application)** and **Step 3 (Finish)**, for the mortgage loan type, scrolled to show every field | You asked me to capture the exact information on the application forms. Only Step 1 has been seen, and the mortgage details must not ask again for anything Step 2 already collects |
 | 2 | A screenshot of an **opened loan** from My Loans (the Action button) | To see what the applicant sees for a loan after submission |
 | 3 | Any **approver or task screen** (inbox, approve, return), and the staff-side list of all loans | To avoid rebuilding approval decisions and the staff list |
-| 4 | Whether **Unified Access Management** signs in through Microsoft Entra ID | The SharePoint-hosted module must be signed in the same way |
 | 5 | **Loan Calculator** and **Staff Saving Scheme**, only if they touch mortgages | To be sure of no overlap |
+
+## 0.5 Decisions after your answers
+
+| Your answer | What changed |
+|---|---|
+| "Create Staff Loan Step 2 is where all the pre-approvals are done" | The module **no longer collects the pre-approval documents**. Its step 7 lists the bank's exact requirements and tracks them: the applicant confirms they were attached in Advance Flow, Create Staff Loan, Step 2. The module keeps only what Advance Flow does not take: the signed Application Form and Consent Letter (filed automatically when e-signed), and the Land Title Certificate and Personalized site plan that go to the Mortgage Unit for the search report. Eligibility is no longer recomputed: the applicant links their Advance Flow loan number and the module shows the result read-only |
+| "Use the sample in the zip folder for the application form" | The form follows the bank's blank form and the completed Home Purchase and Equity Release samples, label for label. Financial Information is not asked again: Advance Flow holds salary and deductions. The Employer's Certification of Income is not in the staff requirements list and is not asked |
+| "Unified Access Management signs in through Microsoft" | Module sign-in stays Microsoft Entra ID |
+| "Esignature should be there for them to sign" | Application form (Borrower and Co-Borrower), reference form, consent letter and valuation form are signed on screen, drawn or typed, with name, date and time saved |
