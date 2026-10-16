@@ -436,6 +436,8 @@ export interface SlaClock {
 export interface MortgageCase {
   id: string;
   ref: string;
+  /** The loan account number in core banking, set when the mortgage account is activated. */
+  accountNumber?: string;
   product: ProductCode;
   state: CaseState;
   applicant: Applicant;

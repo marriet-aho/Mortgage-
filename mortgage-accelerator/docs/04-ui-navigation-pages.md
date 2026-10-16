@@ -50,7 +50,7 @@ A page the role cannot open shows "You do not have access", and the API enforces
 | `#/purchase`, `#/equity` | Product pages | Rules, documents, journey, cases on the product | Start application, check readiness |
 | `#/apply/purchase`, `#/apply/equity` | Application wizard | **Loan Eligibility** (account number, OTP, compute, results, exceptional approval), **Loan Application** in six steps with autosave and live readiness, **Finish** | Send OTP, compute, save, upload, sign, submit |
 | `#/readiness` | Readiness check | What-if figures run through the same rules; start an application with them | Start with these figures |
-| `#/cases` | Case list | Search, product and status filters, SLA chip | Open case |
+| `#/cases` | Case list | Same pattern as the existing Collateral Release screen: search by loan or reference number, Product and Status filters, Reset, Refresh; reference, loan account, product, amount, status, SLA columns | Open case |
 | `#/cases/:id?tab=` | Case workspace | Summary, Forms, Documents, Tasks, Approvals, Property and valuation, Conditions, Disbursement, Collaboration, Audit | Confirm and proceed, sign and accept offer, return for correction, withdraw, request document, complete task, decide approval, verify condition, request disbursement |
 | `#/hub` | Collaboration hub | Cases with threads, watch list of open requests, thread by unit | Message, request, internal note, join for oversight |
 | `#/valuations` | Valuation management | Requests, KPIs, valuer panel; detail with assign, report, review | Assign valuer, submit report, accept or return |

@@ -90,9 +90,19 @@ From the two screenshots of the current LOS:
 |---|---|---|
 | Q1 | Are the DIR definitions in the screenshot "Capital + Personal" and "All Staff Loans" as assumed in [08](08-business-rules.md)? | The module shows the service's numbers in production, but the local preview uses these definitions |
 | Q2 | How does Advance Flow expose eligibility, OTP, applications, tasks and approvals over HTTP (paths, auth, payloads)? | The HTTP client uses the contract in [05](05-api-contract.md); an adapter maps any difference |
-| Q3 | Does the existing **Collateral Release** menu item already cover equity release? | Home Equity Release may overlap with it, and the two should share data rather than duplicate it |
+| ~~Q3~~ | ~~Does the existing **Collateral Release** menu item already cover equity release?~~ **Answered by the third screenshot:** no. Collateral Release is a request register against an existing **loan number** (filters: Loan Number, Product, Status; columns: Loan Number, Account Number, Product, Amount, Status, Date, Action). It discharges security on an existing loan. Equity release is new borrowing, so Home Equity Release stays a separate product | See section 1.5a |
 | Q4 | Does Advance Flow already expose a push channel (SignalR or webhooks) for notifications? | The client polls every 15 seconds as a fallback |
 | Q5 | Is the Advance Flow web app embedding or linking to SharePoint pages today? | Decides whether the module opens in a new tab or inside a frame |
+
+### 1.5a How the module meets the existing Collateral Release screen
+
+| Moment | What happens |
+|---|---|
+| **End of a mortgage** (loan repaid) | The mortgage case already tracks *safe custody* of the title documents. Settlement raises a **Collateral Release request** on the existing screen, using the mortgage's loan number. The module does not copy that screen; it links to it and shows the request's status on the case |
+| **Equity release on a property this bank already holds a charge over** | The application asks for the existing loan number (existing mortgage status "With this bank"). The balance is read from core banking, so the 70% of forced sale value cap uses the real figure, and the earlier charge is dealt with as part of the new security |
+| **List screens** | Case management follows the same list pattern as Collateral Release: search by loan or reference number, Product and Status filters, Reset, Refresh, and a loan account column. The loan account number is filled when the mortgage account is activated |
+
+Open question Q6: which Advance Flow call raises a Collateral Release request, and can it be opened from a link with the loan number pre-filled?
 
 ## 1.6 Module catalogue
 

@@ -382,6 +382,7 @@ export function buildSeed(nowMs: number): SeedData {
     // disbursement and post-disbursement
     if (idxState >= 8) {
       const paidAt = nowMs - (s.state === 'POST_DISBURSEMENT' ? 40 : s.state === 'CLOSED' ? 190 : 1) * DAY;
+      c.accountNumber = '300000010' + (1001 + idx);
       c.disbursements.push({ id: nextId('DSB'), caseId: id, trancheNo: 1, payee: c.purchase ? c.purchase.vendorName : 'Applicant account', amount: s.amount, status: 'PAID', requestedBy: 'Credit Administrator', approvedBy: 'Head Credit Administration', paidAt: new Date(paidAt).toISOString(), paymentRef: 'PAY-' + (7000 + idx) });
       log(c, 'Operations', 'Funds released', 'Paid to ' + c.disbursements[0].payee, paidAt);
       POST_DISBURSEMENT_TEMPLATE.forEach(function (t, k) {

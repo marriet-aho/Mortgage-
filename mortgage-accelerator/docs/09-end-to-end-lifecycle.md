@@ -62,6 +62,8 @@ sequenceDiagram
 | 9 | Post-disbursement | Account created and activated; registration, perfection, Lands Commission, title perfection, safe custody tracked | Post Disbursement | Every item done or waived | Due dates 30 to 130 days |
 | 10 | Closed | Closure summary | System | | |
 
+After closure, when the loan is repaid, the existing **Collateral Release** request releases the security and the documents in safe custody (see [01, section 1.5a](01-solution-architecture.md)).
+
 Exits at any point: **Declined** (Credit, an approver, or a rejected property), **Withdrawn**, **Expired**, **On hold**.
 
 ## 9.3 The two products side by side

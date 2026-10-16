@@ -30,14 +30,19 @@ function CaseList(): JSX.Element {
       <Head title={isApplicant ? 'My applications' : 'Mortgage case management'} sub="Every application is a digital case holding its forms, documents, valuation, approvals, tasks, conditions, messages, SLA clocks and audit log."
         actions={isApplicant ? <><Button primary onClick={function () { app.go('/apply/purchase'); }}>New Home Purchase</Button><Button onClick={function () { app.go('/apply/equity'); }}>New Equity Release</Button></> : undefined} />
       <div className="ma-fgrid" style={{ gridTemplateColumns: '2fr 1fr 1fr' }}>
-        <TextField id="f-q" label="Search" value={q} onChange={setQ} hint="Reference, name or department" />
+        <TextField id="f-q" label="Loan or reference number" value={q} onChange={setQ} hint="Reference, account number, name or department" />
         <SelectField id="f-p" label="Product" value={product} onChange={setProduct} options={[['HOME_PURCHASE', PRODUCT_LABEL.HOME_PURCHASE], ['EQUITY_RELEASE', PRODUCT_LABEL.EQUITY_RELEASE]]} />
         <SelectField id="f-s" label="Status" value={state} onChange={setState} options={(Object.keys(STATE_LABEL) as CaseState[]).filter(function (s) { return s !== 'DRAFT'; }).map(function (s) { return [s, STATE_LABEL[s]] as [string, string]; })} />
+      </div>
+      <div className="ma-row" style={{ justifyContent: 'flex-end' }}>
+        <Button onClick={function () { setQ(''); setProduct(''); setState(''); }}>Reset</Button>
+        <Button onClick={res.reload} title="Refresh the list">Refresh</Button>
       </div>
       {res.loading ? <Loading /> : (
         <Table rowKey={function (c: MortgageCase) { return c.id; }} rows={list} empty="No cases match." onRow={function (c) { app.go(c.state === 'DRAFT' ? '/apply/' + (c.product === 'HOME_PURCHASE' ? 'purchase' : 'equity') : '/cases/' + c.id); }}
           cols={[
             { head: 'Reference', render: function (c) { return <b>{c.ref}</b>; } },
+            { head: 'Loan account', render: function (c) { return c.accountNumber || <span className="muted">Not yet active</span>; } },
             { head: 'Applicant', render: function (c) { return <>{c.applicant.fullName}<div className="small muted">{c.applicant.department}</div></>; } },
             { head: 'Product', render: function (c) { return PRODUCT_LABEL[c.product]; } },
             { head: 'Amount', right: true, render: function (c) { return c.amountRequested ? money(c.amountRequested, c.currency) : '—'; } },

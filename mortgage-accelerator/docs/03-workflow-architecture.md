@@ -96,6 +96,10 @@ flowchart TD
   PAY -->|"Family emergency"| P3["Pay the applicant account"]
 ```
 
+## 3.3a After the mortgage: settlement and Collateral Release
+
+When the loan is fully repaid, the existing **Collateral Release** request releases the security and the title documents held in safe custody. The module links the mortgage case to that request by loan number and shows its status; it does not run a second release process. The case's *safe custody* item is the record of what is being held until then.
+
 ## 3.4 Tasks, owners and SLA
 
 SLA values are **proposed** (decision D3). Clocks pause while a request to the applicant is open.

@@ -48,7 +48,7 @@ erDiagram
 
 | Table | Key columns | Notes |
 |---|---|---|
-| `MA_Case` | `application_id` PK/FK, `product` (`HOME_PURCHASE`, `EQUITY_RELEASE`), `state`, `reference`, `currency`, `amount_requested`, `approved_amount`, `tenor_years`, `rate_pct`, `owner_user_id`, `stage_entered_at`, `sla_code`, `sla_due_at`, `sla_paused_since`, `sla_paused_minutes`, `locked`, `returned_note`, `returned_from_state`, `decline_reason`, `form_versions` | One row per case. Unique index on (employee, product) where state is active (BR-01) |
+| `MA_Case` | `application_id` PK/FK, `product` (`HOME_PURCHASE`, `EQUITY_RELEASE`), `state`, `reference`, `account_number` (the core banking loan account, set at activation), `currency`, `amount_requested`, `approved_amount`, `tenor_years`, `rate_pct`, `owner_user_id`, `stage_entered_at`, `sla_code`, `sla_due_at`, `sla_paused_since`, `sla_paused_minutes`, `locked`, `returned_note`, `returned_from_state`, `decline_reason`, `form_versions` | One row per case. Unique index on (employee, product) where state is active (BR-01) |
 | `MA_Eligibility` | `application_id` PK/FK, `input_json`, `result_json`, `exceptional_approval`, `computed_at`, `service_version` | Stores exactly what the eligibility service returned |
 | `MA_HomePurchase` | `application_id`, `purchase_price`, `property_value`, `down_payment`, `vendor_type`, `vendor_name`, `construction_status` | Check: down payment at least 20% of price |
 | `MA_EquityRelease` | `application_id`, `declared_value`, `forced_sale_value`, `existing_balance`, `existing_status`, `ownership`, `purpose`, `use_of_funds_json` | Release cap enforced by trigger (BR-03) |

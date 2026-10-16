@@ -237,7 +237,7 @@ export class MockAdvanceFlowClient implements AdvanceFlowClient, DevControls {
       const product = f.product, states = f.states, q = f.q ? f.q.toLowerCase() : '';
       if (product) { list = list.filter(function (c) { return c.product === product; }); }
       if (states && states.length) { list = list.filter(function (c) { return states.indexOf(c.state) >= 0; }); }
-      if (q) { list = list.filter(function (c) { return (c.ref + ' ' + c.applicant.fullName + ' ' + c.applicant.department).toLowerCase().indexOf(q) >= 0; }); }
+      if (q) { list = list.filter(function (c) { return (c.ref + ' ' + (c.accountNumber || '') + ' ' + c.applicant.fullName + ' ' + c.applicant.department).toLowerCase().indexOf(q) >= 0; }); }
     }
     return clone(list.sort(function (a, b) { return b.updatedAt.localeCompare(a.updatedAt); }));
   }
@@ -801,7 +801,8 @@ export class MockAdvanceFlowClient implements AdvanceFlowClient, DevControls {
     this.audit(c, 'Funds released', d.payee + ' ' + d.amount.toLocaleString('en-GB') + ' (' + d.paymentRef + ')', 'Operations');
     if (remainingToDisburse(c) <= 0.005 && c.state === 'READY_TO_DISBURSE') {
       this.setState(c, 'POST_DISBURSEMENT', 'Mortgage account created and activated.');
-      this.audit(c, 'Account activated', 'Mortgage account opened in core banking', 'System');
+      c.accountNumber = '300000010' + (1001 + this.d.cases.indexOf(c));
+      this.audit(c, 'Account activated', 'Mortgage account ' + c.accountNumber + ' opened in core banking', 'System');
       c.postItems = POST_DISBURSEMENT_TEMPLATE.map(function (t): PostItem {
         return { id: nextId('PST'), caseId: c.id, type: t.type, owner: 'Post Disbursement Officer', dueDate: new Date(Date.now() + t.days * DAY).toISOString().slice(0, 10), status: 'OPEN' };
       });
