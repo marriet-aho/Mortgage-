@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2980" height="1074" viewBox="0 0 2980 1074" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#55514E"/></marker></defs>
+<rect width="2980" height="1074" fill="#fff"/>
+<text x="20" y="34" font-size="22" font-weight="700" fill="#2B2927">Mortgage Accelerator: swimlane (Home Purchase and Home Equity Release)</text>
+<text x="20" y="56" font-size="13" fill="#7B7672">One case, one record. Assessment runs in parallel. Disbursement is blocked until every condition is verified. Equity Release adds the 70% forced sale value check at the valuation step.</text>
+<rect x="141" y="66" width="492" height="24" rx="4" fill="#55514E"/><text x="387.0" y="83" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Apply</text>
+<rect x="639" y="66" width="326" height="24" rx="4" fill="#55514E"/><text x="802.0" y="83" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Pre-approval</text>
+<rect x="971" y="66" width="160" height="24" rx="4" fill="#55514E"/><text x="1051.0" y="83" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Confirm</text>
+<rect x="1137" y="66" width="326" height="24" rx="4" fill="#55514E"/><text x="1300.0" y="83" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Assess in parallel</text>
+<rect x="1469" y="66" width="160" height="24" rx="4" fill="#55514E"/><text x="1549.0" y="83" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Approve</text>
+<rect x="1635" y="66" width="492" height="24" rx="4" fill="#55514E"/><text x="1881.0" y="83" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Offer and conditions</text>
+<rect x="2133" y="66" width="492" height="24" rx="4" fill="#55514E"/><text x="2379.0" y="83" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Disburse</text>
+<rect x="2631" y="66" width="326" height="24" rx="4" fill="#55514E"/><text x="2794.0" y="83" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">After disbursement</text>
+<rect x="0" y="96" width="2980" height="84" fill="#fff" stroke="#E6E3E0"/>
+<rect x="0" y="96" width="138" height="84" fill="#F1EFED" stroke="#E6E3E0"/>
+<text x="69.0" y="142.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Applicant</text>
+<rect x="0" y="180" width="2980" height="84" fill="#F8F7F6" stroke="#E6E3E0"/>
+<rect x="0" y="180" width="138" height="84" fill="#F1EFED" stroke="#E6E3E0"/>
+<text x="69.0" y="218.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Advance Flow</text>
+<text x="69.0" y="234.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">(system)</text>
+<rect x="0" y="264" width="2980" height="84" fill="#fff" stroke="#E6E3E0"/>
+<rect x="0" y="264" width="138" height="84" fill="#F1EFED" stroke="#E6E3E0"/>
+<text x="69.0" y="310.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">HR</text>
+<rect x="0" y="348" width="2980" height="84" fill="#F8F7F6" stroke="#E6E3E0"/>
+<rect x="0" y="348" width="138" height="84" fill="#F1EFED" stroke="#E6E3E0"/>
+<text x="69.0" y="394.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Mortgage Team</text>
+<rect x="0" y="432" width="2980" height="84" fill="#fff" stroke="#E6E3E0"/>
+<rect x="0" y="432" width="138" height="84" fill="#F1EFED" stroke="#E6E3E0"/>
+<text x="69.0" y="478.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Credit Team</text>
+<rect x="0" y="516" width="2980" height="84" fill="#F8F7F6" stroke="#E6E3E0"/>
+<rect x="0" y="516" width="138" height="84" fill="#F1EFED" stroke="#E6E3E0"/>
+<text x="69.0" y="562.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Collateral Team</text>
+<rect x="0" y="600" width="2980" height="84" fill="#fff" stroke="#E6E3E0"/>
+<rect x="0" y="600" width="138" height="84" fill="#F1EFED" stroke="#E6E3E0"/>
+<text x="69.0" y="646.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Legal Team</text>
+<rect x="0" y="684" width="2980" height="84" fill="#F8F7F6" stroke="#E6E3E0"/>
+<rect x="0" y="684" width="138" height="84" fill="#F1EFED" stroke="#E6E3E0"/>
+<text x="69.0" y="722.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Approval</text>
+<text x="69.0" y="738.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Authorities</text>
+<rect x="0" y="768" width="2980" height="84" fill="#fff" stroke="#E6E3E0"/>
+<rect x="0" y="768" width="138" height="84" fill="#F1EFED" stroke="#E6E3E0"/>
+<text x="69.0" y="806.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Credit</text>
+<text x="69.0" y="822.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Administration</text>
+<rect x="0" y="852" width="2980" height="84" fill="#F8F7F6" stroke="#E6E3E0"/>
+<rect x="0" y="852" width="138" height="84" fill="#F1EFED" stroke="#E6E3E0"/>
+<text x="69.0" y="898.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Operations</text>
+<rect x="0" y="936" width="2980" height="84" fill="#fff" stroke="#E6E3E0"/>
+<rect x="0" y="936" width="138" height="84" fill="#F1EFED" stroke="#E6E3E0"/>
+<text x="69.0" y="974.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Post</text>
+<text x="69.0" y="990.0" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2927">Disbursement</text>
+<rect x="1140" y="352" width="154" height="328" rx="10" fill="none" stroke="#F26A1B" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="1217.0" y="676" text-anchor="middle" font-size="11" font-weight="700" fill="#D95400">in parallel</text>
+<path d="M295.0,138.0 H313.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M461.0,138.0 H479.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M553.0,164.0 V196.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M627.0,222.0 H627.0 V306.0 H645.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M627.0,222.0 H645.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M719.0,280.0 V248.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M793.0,222.0 H811.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M959.0,222.0 H959.0 V138.0 H977.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<text x="963.0" y="176.0" font-size="11" font-weight="700" fill="#D95400">Yes</text>
+<path d="M885.0,250.0 V448.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<text x="891.0" y="348.0" font-size="11" font-weight="700" fill="#D95400">Referred</text>
+<path d="M959.0,474.0 H959.0 V138.0 H977.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1125.0,138.0 H1125.0 V558.0 H1143.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1125.0,138.0 H1125.0 V642.0 H1143.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1125.0,138.0 H1125.0 V474.0 H1143.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1291.0,558.0 H1309.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1291.0,642.0 H1291.0 V558.0 H1309.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1457.0,558.0 H1457.0 V222.0 H1475.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<text x="1461.0" y="386.0" font-size="11" font-weight="700" fill="#D95400">Yes</text>
+<path d="M1291.0,474.0 H1457.0 V222.0 H1475.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1549.0,248.0 V700.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1623.0,726.0 H1623.0 V222.0 H1641.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1715.0,196.0 V164.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1789.0,138.0 H1807.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1789.0,138.0 H1789.0 V642.0 H1807.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1955.0,138.0 H1955.0 V810.0 H1973.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1955.0,642.0 H1955.0 V810.0 H1973.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M1457.0,558.0 H1973.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M2121.0,810.0 H2121.0 V222.0 H2139.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M2121.0,558.0 H2121.0 V222.0 H2139.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M2287.0,222.0 H2287.0 V810.0 H2305.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<text x="2291.0" y="512.0" font-size="11" font-weight="700" fill="#D95400">Yes</text>
+<path d="M2379.0,784.0 V752.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M2453.0,726.0 H2453.0 V894.0 H2471.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M2619.0,894.0 H2619.0 V978.0 H2637.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<path d="M2785.0,978.0 H2785.0 V222.0 H2803.0" fill="none" stroke="#55514E" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="147.0" y="112.0" width="148" height="52" rx="8" fill="#fff" stroke="#D95400" stroke-width="1.8"/>
+<text x="221.0" y="128.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Loan Eligibility</text>
+<text x="221.0" y="142.0" text-anchor="middle" font-size="11.5" fill="#2B2927">account no., OTP,</text>
+<text x="221.0" y="156.0" text-anchor="middle" font-size="11.5" fill="#2B2927">compute</text>
+<rect x="313.0" y="112.0" width="148" height="52" rx="8" fill="#fff" stroke="#D95400" stroke-width="1.8"/>
+<text x="387.0" y="128.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Loan Application</text>
+<text x="387.0" y="142.0" text-anchor="middle" font-size="11.5" fill="#2B2927">forms, consent,</text>
+<text x="387.0" y="156.0" text-anchor="middle" font-size="11.5" fill="#2B2927">documents</text>
+<rect x="479.0" y="112.0" width="148" height="52" rx="8" fill="#fff" stroke="#D95400" stroke-width="1.8"/>
+<text x="553.0" y="142.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Submit</text>
+<rect x="479.0" y="196.0" width="148" height="52" rx="8" fill="#F1EFED" stroke="#7B7672" stroke-width="1.4"/>
+<text x="553.0" y="212.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Reference no.,</text>
+<text x="553.0" y="226.0" text-anchor="middle" font-size="11.5" fill="#2B2927">case locked,</text>
+<text x="553.0" y="240.0" text-anchor="middle" font-size="11.5" fill="#2B2927">workflow starts</text>
+<rect x="645.0" y="280.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="719.0" y="303.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Verify employment</text>
+<text x="719.0" y="317.0" text-anchor="middle" font-size="11.5" fill="#2B2927">and salary</text>
+<rect x="645.0" y="196.0" width="148" height="52" rx="8" fill="#F1EFED" stroke="#7B7672" stroke-width="1.4"/>
+<text x="719.0" y="219.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Bureau, affordability,</text>
+<text x="719.0" y="233.0" text-anchor="middle" font-size="11.5" fill="#2B2927">risk, score</text>
+<polygon points="885.0,194.0 959.0,222.0 885.0,250.0 811.0,222.0" fill="#FDEEE3" stroke="#D95400" stroke-width="1.8"/>
+<text x="885.0" y="226.0" text-anchor="middle" font-size="11" fill="#2B2927">Pre-approved?</text>
+<rect x="811.0" y="448.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="885.0" y="471.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Review the</text>
+<text x="885.0" y="485.0" text-anchor="middle" font-size="11.5" fill="#2B2927">referral</text>
+<rect x="977.0" y="112.0" width="148" height="52" rx="8" fill="#fff" stroke="#D95400" stroke-width="1.8"/>
+<text x="1051.0" y="135.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Confirm</text>
+<text x="1051.0" y="149.0" text-anchor="middle" font-size="11.5" fill="#2B2927">to proceed</text>
+<rect x="1143.0" y="532.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="1217.0" y="555.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Valuation: assign,</text>
+<text x="1217.0" y="569.0" text-anchor="middle" font-size="11.5" fill="#2B2927">report, review</text>
+<rect x="1143.0" y="616.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="1217.0" y="639.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Land, certificate,</text>
+<text x="1217.0" y="653.0" text-anchor="middle" font-size="11.5" fill="#2B2927">consolidated searches</text>
+<rect x="1143.0" y="448.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="1217.0" y="471.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Credit</text>
+<text x="1217.0" y="485.0" text-anchor="middle" font-size="11.5" fill="#2B2927">recommendation</text>
+<rect x="1143.0" y="364.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-dasharray="4 4" stroke-width="1.4"/>
+<text x="1217.0" y="387.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Oversight only:</text>
+<text x="1217.0" y="401.0" text-anchor="middle" font-size="11.5" fill="#2B2927">hub, exceptions</text>
+<polygon points="1383.0,530.0 1457.0,558.0 1383.0,586.0 1309.0,558.0" fill="#FDEEE3" stroke="#D95400" stroke-width="1.8"/>
+<text x="1383.0" y="555.0" text-anchor="middle" font-size="11" fill="#2B2927">Property</text>
+<text x="1383.0" y="569.0" text-anchor="middle" font-size="11" fill="#2B2927">acceptable?</text>
+<rect x="1475.0" y="196.0" width="148" height="52" rx="8" fill="#F1EFED" stroke="#7B7672" stroke-width="1.4"/>
+<text x="1549.0" y="219.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Approval routing</text>
+<text x="1549.0" y="233.0" text-anchor="middle" font-size="11.5" fill="#2B2927">by tier</text>
+<rect x="1475.0" y="700.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="1549.0" y="723.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Approve L1 to L8</text>
+<text x="1549.0" y="737.0" text-anchor="middle" font-size="11.5" fill="#2B2927">(parallel groups)</text>
+<rect x="1641.0" y="196.0" width="148" height="52" rx="8" fill="#F1EFED" stroke="#7B7672" stroke-width="1.4"/>
+<text x="1715.0" y="219.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Offer and Truth</text>
+<text x="1715.0" y="233.0" text-anchor="middle" font-size="11.5" fill="#2B2927">in Lending</text>
+<rect x="1641.0" y="112.0" width="148" height="52" rx="8" fill="#fff" stroke="#D95400" stroke-width="1.8"/>
+<text x="1715.0" y="135.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Sign and</text>
+<text x="1715.0" y="149.0" text-anchor="middle" font-size="11.5" fill="#2B2927">accept offer</text>
+<rect x="1807.0" y="112.0" width="148" height="52" rx="8" fill="#fff" stroke="#D95400" stroke-width="1.8"/>
+<text x="1881.0" y="135.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Provide condition</text>
+<text x="1881.0" y="149.0" text-anchor="middle" font-size="11.5" fill="#2B2927">evidence</text>
+<rect x="1807.0" y="616.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="1881.0" y="639.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Legal advice,</text>
+<text x="1881.0" y="653.0" text-anchor="middle" font-size="11.5" fill="#2B2927">mortgage deed</text>
+<rect x="1973.0" y="784.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="2047.0" y="807.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Verify</text>
+<text x="2047.0" y="821.0" text-anchor="middle" font-size="11.5" fill="#2B2927">conditions</text>
+<rect x="1973.0" y="532.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="2047.0" y="555.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Fit-to-lend</text>
+<text x="2047.0" y="569.0" text-anchor="middle" font-size="11.5" fill="#2B2927">certificate</text>
+<polygon points="2213.0,194.0 2287.0,222.0 2213.0,250.0 2139.0,222.0" fill="#FDEEE3" stroke="#D95400" stroke-width="1.8"/>
+<text x="2213.0" y="226.0" text-anchor="middle" font-size="11" fill="#2B2927">Gate open?</text>
+<rect x="2305.0" y="784.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="2379.0" y="807.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Request</text>
+<text x="2379.0" y="821.0" text-anchor="middle" font-size="11.5" fill="#2B2927">disbursement</text>
+<rect x="2305.0" y="700.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="2379.0" y="723.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Approve payment</text>
+<text x="2379.0" y="737.0" text-anchor="middle" font-size="11.5" fill="#2B2927">(second person)</text>
+<rect x="2471.0" y="868.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="2545.0" y="891.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Release funds,</text>
+<text x="2545.0" y="905.0" text-anchor="middle" font-size="11.5" fill="#2B2927">activate account</text>
+<rect x="2637.0" y="952.0" width="148" height="52" rx="8" fill="#fff" stroke="#7B7672" stroke-width="1.4"/>
+<text x="2711.0" y="968.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Registration, perfection,</text>
+<text x="2711.0" y="982.0" text-anchor="middle" font-size="11.5" fill="#2B2927">Lands Commission,</text>
+<text x="2711.0" y="996.0" text-anchor="middle" font-size="11.5" fill="#2B2927">safe custody</text>
+<rect x="2823.0" y="202.0" width="108" height="40" rx="20" fill="#2B2927"/>
+<text x="2877.0" y="226.0" text-anchor="middle" font-size="13" fill="#fff">Closed</text>
+<text x="1383.0" y="602.0" text-anchor="middle" font-size="11" font-weight="700" fill="#D95400">No: property rejected,</text><text x="1383.0" y="615.0" text-anchor="middle" font-size="11" font-weight="700" fill="#D95400">spend stops</text>
+<rect x="20" y="1035" width="22" height="14" rx="3" fill="#fff" stroke="#7B7672" stroke-width="1.5"/><text x="50" y="1046" font-size="12" fill="#55514E">Staff or applicant task</text>
+<rect x="221" y="1035" width="22" height="14" rx="3" fill="#F1EFED" stroke="#7B7672" stroke-width="1.5"/><text x="251" y="1046" font-size="12" fill="#55514E">Advance Flow automation</text>
+<rect x="422" y="1035" width="22" height="14" rx="3" fill="#fff" stroke="#D95400" stroke-width="1.5"/><text x="452" y="1046" font-size="12" fill="#55514E">Applicant step</text>
+<rect x="560" y="1035" width="22" height="14" rx="3" fill="#FDEEE3" stroke="#D95400" stroke-width="1.5"/><text x="590" y="1046" font-size="12" fill="#55514E">Decision</text>
+<text x="2960" y="1046" text-anchor="end" font-size="12" fill="#7B7672">After repayment, the existing Collateral Release request releases the security and the documents in safe custody.</text>
+</svg>

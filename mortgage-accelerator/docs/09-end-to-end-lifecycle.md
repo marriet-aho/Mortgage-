@@ -79,6 +79,10 @@ Exits at any point: **Declined** (Credit, an approver, or a rejected property), 
 
 ## 9.4 Swimlane
 
+![Swimlane of the Mortgage Accelerator](images/swimlane.png)
+
+The image above is the whole journey on one page (vector copy: [images/swimlane.svg](images/swimlane.svg)). The editable Mermaid version follows.
+
 ```mermaid
 flowchart LR
   subgraph Applicant
