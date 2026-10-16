@@ -13,7 +13,7 @@ A small SharePoint web part that digitizes the bank's staff mortgage forms with 
 
 Also shown on each product page, word for word: the staff policy, steps to follow, pre-approval and post-approval requirements, and fees expected.
 
-Every question uses the label printed on the paper form. Each form is signed on screen (draw with a mouse, finger or pen, or type your name; name, date and time are saved). Then **Print / Save as PDF**, or **Save to SharePoint library**.
+Every question uses the label printed on the paper form. Each form is signed on screen (draw with a mouse, finger or pen, or type your name; name, date and time are saved). Then **Submit and go to Advance Flow**: the signed forms are saved to the SharePoint library and the person is taken to Advance Flow (Create Staff Loan) to finish the loan there. **Print / Save as PDF** is still available on every form.
 
 Left out on purpose: Financial Information (Advance Flow holds salary and deductions) and the Employer's Certification of Income (not on the staff requirements list).
 
@@ -53,7 +53,8 @@ Unified Access Management signs in through Microsoft, so the same Microsoft acco
 1. SharePoint admin: upload `sharepoint/solution/mortgage-forms.sppkg` to the tenant **App Catalog** (Apps for SharePoint) and choose **Deploy**. The package does not request any API permission.
 2. Create a **document library** called `Mortgage Forms` on the SharePoint site. Give staff **Contribute** on the library. Break inheritance on the library if every person should see only their own folder (the web part makes one folder per person).
 3. On the site, create a page, add the **Mortgage Forms** web part (group "Advance Flow"). Optionally set the library name and the Advance Flow address in the web part properties.
-4. Ask the Advance Flow team to add the link (option A).
+4. In the web part properties, set **Advance Flow address** to the Create Staff Loan page. This is where **Submit and go to Advance Flow** takes people.
+5. Ask the Advance Flow team to add the menu link (option A).
 
 ## Build
 

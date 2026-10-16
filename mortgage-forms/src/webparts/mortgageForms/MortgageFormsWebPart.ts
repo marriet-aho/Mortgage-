@@ -28,7 +28,7 @@ export default class MortgageFormsWebPart extends BaseClientSideWebPart<IMortgag
       this.properties.documentLibrary || 'Mortgage Forms',
       userKey
     );
-    ReactDom.render(React.createElement(FormsApp, { store, userName: u.displayName, userEmail: u.email, advanceFlowUrl: this.properties.advanceFlowUrl }), this.domElement);
+    ReactDom.render(React.createElement(FormsApp, { store, userName: u.displayName, userEmail: u.email, advanceFlowUrl: this.properties.advanceFlowUrl, navigate: (url: string) => { window.open(url, '_self'); } }), this.domElement);
   }
 
   protected onDispose(): void {

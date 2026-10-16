@@ -15,6 +15,8 @@ export interface FormsAppProps {
   userEmail: string;
   /** Address of Advance Flow, so people can jump to Create Staff Loan. Optional. */
   advanceFlowUrl?: string;
+  /** How to leave for Advance Flow. Defaults to opening the address in this window. The preview overrides it. */
+  navigate?: (url: string) => void;
 }
 
 type View = { kind: 'home' } | { kind: 'pack'; product: ProductCode } | { kind: 'form'; product: ProductCode; form: FormId } | { kind: 'preview'; product: ProductCode; form: FormId };
@@ -83,7 +85,15 @@ export function FormsApp(p: FormsAppProps): JSX.Element {
   if (view.kind === 'home') {
     body = <Home onPick={open} loading={loading} advanceFlowUrl={p.advanceFlowUrl} />;
   } else if (view.kind === 'pack') {
-    body = <PackView product={view.product} status={function (id) { return status(view.product, id); }} go={function (id) { setView({ kind: 'form', product: view.product, form: id }); }} back={function () { setView({ kind: 'home' }); }} advanceFlowUrl={p.advanceFlowUrl} />;
+    const pv = view.product;
+    const submit = function (): void {
+      const ids = availableForms(pv);
+      Promise.all(ids.map(function (id) { return p.store.publish(pv, FORM_TITLE[id].toLowerCase().replace(/[^a-z]+/g, '-') + '.html', standalonePage(FORM_TITLE[id], formHtml(id, pv, pack[id] || {}))); })).then(function () {
+        say('Forms submitted and saved. Taking you to Advance Flow, Create Staff Loan…');
+        window.setTimeout(function () { if (p.advanceFlowUrl) { (p.navigate || function (u: string) { window.location.href = u; })(p.advanceFlowUrl); } }, 1200);
+      }, function (e) { say(String(e)); });
+    };
+    body = <PackView product={pv} canSubmit={availableForms(pv).every(function (id) { return status(pv, id) === 'Signed'; })} onSubmit={submit} status={function (id) { return status(pv, id); }} go={function (id) { setView({ kind: 'form', product: view.product, form: id }); }} back={function () { setView({ kind: 'home' }); }} advanceFlowUrl={p.advanceFlowUrl} />;
   } else if (view.kind === 'form') {
     const v = view;
     body = <FormPage product={v.product} id={v.form} f={pack[v.form] || {}} set={function (patch) { change(v.product, v.form, patch); }} saved={saved} signer={(str(pack[v.form] || {}, 'b_first_name') + ' ' + str(pack[v.form] || {}, 'b_last_name')).trim() || p.userName}
@@ -158,7 +168,7 @@ function Home(p: { onPick: (p: ProductCode) => void; loading: boolean; advanceFl
 
 /* ---------------- pack ---------------- */
 
-function PackView(p: { product: ProductCode; status: (id: FormId) => string; go: (id: FormId) => void; back: () => void; advanceFlowUrl?: string }): JSX.Element {
+function PackView(p: { product: ProductCode; canSubmit: boolean; onSubmit: () => void; status: (id: FormId) => string; go: (id: FormId) => void; back: () => void; advanceFlowUrl?: string }): JSX.Element {
   const r = REQUIREMENTS[p.product];
   const ids = availableForms(p.product);
   const hereLabel = function (here?: string): JSX.Element | null { return here ? <Chip tone="orange">Done on this page</Chip> : null; };
@@ -173,6 +183,12 @@ function PackView(p: { product: ProductCode; status: (id: FormId) => string; go:
           })}
         </tbody></table></div>
       </Section>
+      <Panel title="Submit">
+        <div className="mf-row">
+          <Button primary disabled={!p.canSubmit} onClick={p.onSubmit}>Submit and go to Advance Flow</Button>
+          <span className="small muted">{p.canSubmit ? 'Saves your signed forms, then opens Advance Flow, Create Staff Loan.' : 'Complete and sign every form above to submit.'}</span>
+        </div>
+      </Panel>
       <div className="mf-grid2">
         <div className="mf-stack">
           {r.policy ? <Panel title="Staff policy"><ul style={{ margin: 0, paddingLeft: 18 }}>{r.policy.map(function (t) { return <li key={t}>{t}</li>; })}</ul></Panel> : null}
