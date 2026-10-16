@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "mortgage-forms-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/mortgageForms/MortgageFormsWebPart.js",
+          "manifest": "./src/webparts/mortgageForms/MortgageFormsWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "MortgageFormsWebPartStrings": "lib/webparts/mortgageForms/loc/{locale}.js"
+  }
+}

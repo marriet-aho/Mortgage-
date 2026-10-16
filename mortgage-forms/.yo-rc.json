@@ -1,0 +1,21 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "18.17.1",
+    "sdksVersions": {
+      "@microsoft/microsoft-graph-client": "3.0.2",
+      "@microsoft/teams-js": "2.12.0"
+    },
+    "version": "1.18.2",
+    "libraryName": "mortgage-forms",
+    "libraryId": "b3a6d2f4-6c1e-4a57-9d0e-3f6a8c52e711",
+    "environment": "spo",
+    "packageManager": "npm",
+    "solutionName": "mortgage-forms",
+    "solutionShortDescription": "Mortgage Forms for Advance Flow",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "componentType": "webpart"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "mortgage-forms-client-side-solution",
+    "id": "b3a6d2f4-6c1e-4a57-9d0e-3f6a8c52e711",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.18.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "Mortgage Forms for Advance Flow"
+      },
+      "longDescription": {
+        "default": "Digital Home Purchase and Home Equity Release mortgage forms with e-signature, for Advance Flow Create Staff Loan Step 2."
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "Mortgage Forms",
+        "description": "Adds the Mortgage Forms web part.",
+        "id": "c7f2a8d1-3e54-4b09-8a6c-1d9e0b7f4a22",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/mortgage-forms.sppkg"
+  }
+}
