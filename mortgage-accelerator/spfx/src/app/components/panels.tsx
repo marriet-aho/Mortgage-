@@ -117,6 +117,17 @@ export function DocumentsPanel(p: { c: MortgageCase; canUpload: boolean; canRequ
     }, docLabel(docType) + ' uploaded to the case library.');
   };
 
+  const attachSample = function (docType: string, category: (typeof DOC_SPECS)[0]['category']): Promise<unknown> {
+    return app.client.uploadDocument(p.c.id, docType, category, { name: docType.toLowerCase() + '-sample.pdf', sizeKb: 120 + docType.length * 7 });
+  };
+  const attachAllSamples = function (): void {
+    void act(async function () {
+      for (const s of required) {
+        if (!list.some(function (d) { return d.docType === s.docType; })) { await attachSample(s.docType, s.category); }
+      }
+    }, 'Sample documents attached for every required item.');
+  };
+
   const row = function (s: (typeof DOC_SPECS)[0]): JSX.Element {
     const mine = list.filter(function (d) { return d.docType === s.docType; });
     const last = mine[mine.length - 1];
@@ -127,6 +138,7 @@ export function DocumentsPanel(p: { c: MortgageCase; canUpload: boolean; canRequ
         <td>{last ? <Chip tone="dark">v{last.version} attached</Chip> : asked ? <Chip tone="orange">Requested · due {fmtDate(asked.dueDate)}</Chip> : s.required(p.c) ? <Chip tone="solid">Missing</Chip> : <Chip tone="idle">Optional</Chip>}</td>
         <td className="small">{last ? <><div>{last.fileName}</div><div className="muted">{last.sizeKb} KB · {last.classification.toLowerCase()} · {relTime(last.uploadedAt)}</div></> : '—'}</td>
         <td className="right">
+          {p.canUpload && app.files.demo ? <Button small onClick={function () { void act(function () { return attachSample(s.docType, s.category); }, s.label + ' attached (sample).'); }}>Attach sample</Button> : null}{' '}
           {p.canUpload ? (
             <label className={'ma-btn sm' + (last ? '' : ' pri')} style={{ cursor: 'pointer' }}>
               {last ? 'Replace' : 'Upload'}
@@ -140,6 +152,7 @@ export function DocumentsPanel(p: { c: MortgageCase; canUpload: boolean; canRequ
 
   return (
     <div className="ma-stack">
+      {p.canUpload && app.files.demo ? <Note><b>Demo.</b> Some preview windows block the file picker. Use <b>Attach sample</b> on any row, or <Button small onClick={attachAllSamples}>Attach samples for all required documents</Button> to move on.</Note> : null}
       <div className="ma-tw"><table className="ma-t"><thead><tr><th>Document</th><th>Status</th><th>File</th><th /></tr></thead>
         <tbody>{required.map(row)}{optional.map(row)}</tbody></table></div>
       <div className="small muted">Files are stored once in the case folder of the SharePoint document library. Every unit reads the same copy.</div>

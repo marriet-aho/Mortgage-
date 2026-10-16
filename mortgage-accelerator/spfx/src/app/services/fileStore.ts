@@ -10,6 +10,8 @@ export interface StoredFile {
 }
 
 export interface FileStore {
+  /** True only for the local harness, which can attach sample files without a file picker. */
+  demo?: boolean;
   upload(caseRef: string, docType: string, file: File): Promise<StoredFile>;
 }
 
@@ -28,6 +30,7 @@ export function validateFile(file: { name: string; size: number; type: string })
 
 /** Local stand-in: pretends to store the file and returns a library-style URL. */
 export class MockFileStore implements FileStore {
+  public demo = true;
   upload(caseRef: string, docType: string, file: File): Promise<StoredFile> {
     return Promise.resolve({ name: file.name, sizeKb: Math.max(1, Math.round(file.size / 1024)), libraryUrl: '/sites/mortgage/Case Documents/' + caseRef + '/' + docType.toLowerCase() + '/' + file.name });
   }
