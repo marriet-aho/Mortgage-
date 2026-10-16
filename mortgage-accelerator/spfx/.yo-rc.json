@@ -1,0 +1,18 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "18.17.1",
+    "sdksVersions": { "@microsoft/microsoft-graph-client": "3.0.2", "@microsoft/teams-js": "2.12.0" },
+    "version": "1.18.2",
+    "libraryName": "mortgage-accelerator",
+    "libraryId": "8f1e67fc-4e0f-4bd3-a462-ad5dfa73ba60",
+    "environment": "spo",
+    "packageManager": "npm",
+    "solutionName": "mortgage-accelerator",
+    "solutionShortDescription": "Mortgage Accelerator for Advance Flow",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "componentType": "webpart"
+  }
+}

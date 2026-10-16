@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "mortgage-accelerator-client-side-solution",
+    "id": "8f1e67fc-4e0f-4bd3-a462-ad5dfa73ba60",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.18.2"
+    },
+    "metadata": {
+      "shortDescription": { "default": "Mortgage Accelerator for Advance Flow" },
+      "longDescription": { "default": "Home Purchase and Home Equity Release mortgages inside the Advance Flow LOS." },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "Mortgage Accelerator",
+        "description": "Adds the Mortgage Accelerator web part.",
+        "id": "02a2acf8-cafc-407e-8e12-aba2e21704db",
+        "version": "1.0.0.0"
+      }
+    ],
+    "webApiPermissionRequests": [
+      { "resource": "Advance Flow API", "scope": "Mortgage.ReadWrite" }
+    ]
+  },
+  "paths": { "zippedPackage": "solution/mortgage-accelerator.sppkg" }
+}

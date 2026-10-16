@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "mortgage-accelerator-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/mortgageAccelerator/MortgageAcceleratorWebPart.js",
+          "manifest": "./src/webparts/mortgageAccelerator/MortgageAcceleratorWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "MortgageAcceleratorWebPartStrings": "lib/webparts/mortgageAccelerator/loc/{locale}.js"
+  }
+}
