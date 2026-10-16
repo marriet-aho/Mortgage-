@@ -22,6 +22,7 @@ Design package for the Staff **Home Purchase Mortgage** and **Home Equity Releas
 | 19 | Dashboard specifications | [12-dashboards.md](12-dashboards.md) |
 | 22 | Wireframes | [13-wireframes.md](13-wireframes.md) |
 | 23, 24 | Implementation roadmap, benefits realization | [14-roadmap-benefits.md](14-roadmap-benefits.md) |
+| (summary) | Framework on a page | [15-framework-on-a-page.md](15-framework-on-a-page.md) |
 
 Diagrams are Mermaid and render on GitHub and in most Markdown viewers.
 
