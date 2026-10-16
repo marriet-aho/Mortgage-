@@ -81,7 +81,7 @@ interface Spec {
   married?: boolean;
   tenure?: 'FREEHOLD' | 'LEASEHOLD';
   vendor?: 'DEVELOPER' | 'PRIVATE';
-  purpose?: 'HOME_IMPROVEMENT' | 'HOME_RENOVATION' | 'MEDICAL' | 'FAMILY_EMERGENCY' | 'TUITION';
+  purpose?: 'HOME_IMPROVEMENT_RENOVATION' | 'MEDICAL' | 'FAMILY_EMERGENCY' | 'TUITION';
   approvedLevels?: number;
   condVerified?: number;
   valStatus?: ValuationRequest['status'];
@@ -97,7 +97,7 @@ export const SPECS: Spec[] = [
   { n: 18, name: 'Kofi Boateng', dept: 'Information Technology', position: 'Senior Developer', product: 'HOME_PURCHASE', state: 'IN_APPROVAL', amount: 450000, tenor: 25, salary: 19000, ageDays: 21, stageDays: 1, address: 'Plot 22, Tema Community 25', region: 'Greater Accra', vendor: 'DEVELOPER', approvedLevels: 2 },
   { n: 19, name: 'Abena Asante', dept: 'Retail Banking', position: 'Branch Manager', product: 'HOME_PURCHASE', state: 'PRE_APPROVAL', amount: 380000, tenor: 20, salary: 17000, ageDays: 1, stageDays: 0, address: 'Ahodwo, Kumasi', region: 'Ashanti', vendor: 'PRIVATE' },
   { n: 20, name: 'Yaw Darko', dept: 'Treasury', position: 'Head of Dealing', product: 'HOME_PURCHASE', state: 'CONDITIONS_PENDING', amount: 910000, tenor: 22, salary: 36000, ageDays: 41, stageDays: 6, address: '4-bedroom house, East Legon Hills', region: 'Greater Accra', married: true, vendor: 'DEVELOPER', condVerified: 4 },
-  { n: 21, name: 'Efua Mensah', dept: 'Finance', position: 'Financial Controller', product: 'EQUITY_RELEASE', state: 'IN_ASSESSMENT', amount: 300000, tenor: 10, salary: 26000, ageDays: 12, stageDays: 6, address: 'House 12, Kasoa', region: 'Central', purpose: 'HOME_RENOVATION', valStatus: 'UNDER_REVIEW', searchesDone: 3 },
+  { n: 21, name: 'Efua Mensah', dept: 'Finance', position: 'Financial Controller', product: 'EQUITY_RELEASE', state: 'IN_ASSESSMENT', amount: 300000, tenor: 10, salary: 26000, ageDays: 12, stageDays: 6, address: 'House 12, Kasoa', region: 'Central', purpose: 'HOME_IMPROVEMENT_RENOVATION', valStatus: 'UNDER_REVIEW', searchesDone: 3 },
   { n: 22, name: 'Kwabena Osei', dept: 'Risk Management', position: 'Risk Analyst', product: 'EQUITY_RELEASE', state: 'READY_TO_DISBURSE', amount: 240000, tenor: 8, salary: 15000, ageDays: 52, stageDays: 2, address: 'Spintex Road, Accra', region: 'Greater Accra', purpose: 'TUITION' },
   { n: 23, name: 'Esi Quaye', dept: 'Customer Experience', position: 'Team Lead', product: 'HOME_PURCHASE', state: 'POST_DISBURSEMENT', amount: 410000, tenor: 20, salary: 16000, ageDays: 95, stageDays: 40, address: 'Dansoman, Accra', region: 'Greater Accra', vendor: 'DEVELOPER', postDone: 2, overduePost: true },
   { n: 24, name: 'Fiifi Tetteh', dept: 'Internal Audit', position: 'Audit Manager', product: 'HOME_PURCHASE', state: 'REFERRED', amount: 365000, tenor: 20, salary: 13000, ageDays: 2, stageDays: 1, address: 'Anaji, Takoradi', region: 'Western', vendor: 'PRIVATE' },
@@ -201,7 +201,7 @@ export function buildSeed(nowMs: number): SeedData {
         liabilitiesTotal: s.amount * 0.08
       },
       purchase: s.product === 'HOME_PURCHASE' ? { purchasePrice: price, propertyValue: price, downPayment: Math.round(price * 0.22), vendorType: s.vendor || 'DEVELOPER', vendorName: s.vendor === 'PRIVATE' ? 'Mr. K. Adjei' : 'Cedar Court Developments', constructionStatus: 'COMPLETED' } : undefined,
-      equity: s.product === 'EQUITY_RELEASE' ? { declaredValue: Math.round(fsv / 0.78), forcedSaleValue: undefined, existingMortgageBalance: 0, existingMortgageStatus: 'NONE', ownership: 'SOLE', purpose: s.purpose || 'HOME_RENOVATION', useOfFunds: [{ item: 'Main use', amount: s.amount }] } : undefined,
+      equity: s.product === 'EQUITY_RELEASE' ? { declaredValue: Math.round(fsv / 0.78), forcedSaleValue: undefined, existingMortgageBalance: 0, existingMortgageStatus: 'NONE', ownership: 'SOLE', purpose: s.purpose || 'HOME_IMPROVEMENT_RENOVATION', useOfFunds: [{ item: 'Main use', amount: s.amount }] } : undefined,
       consent: { creditBureau: s.state !== 'DRAFT', identity: s.state !== 'DRAFT', dataProcessing: s.state !== 'DRAFT', regulatory: s.state !== 'DRAFT', informationSharing: s.state !== 'DRAFT', signedAt: s.state === 'DRAFT' ? undefined : new Date(created).toISOString(), signedBy: s.name },
       ownerName: 'Kwame Mensah',
       createdAt: new Date(created).toISOString(),

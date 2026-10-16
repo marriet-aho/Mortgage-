@@ -53,6 +53,10 @@ export interface DraftPatch {
   ratePct?: number;
   currency?: 'GHS' | 'USD' | 'EUR';
   coBorrowerName?: string;
+  form?: { [key: string]: string | boolean };
+  valuationFields?: { [key: string]: string };
+  sendValuationRequest?: boolean;
+  sendSearchRequest?: boolean;
 }
 
 export interface FunnelRow {

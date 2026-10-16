@@ -84,18 +84,16 @@ export const PRODUCT_LABEL: Record<ProductCode, string> = {
 };
 
 export type EquityPurpose =
-  | 'HOME_IMPROVEMENT'
-  | 'HOME_RENOVATION'
+  | 'HOME_IMPROVEMENT_RENOVATION'
   | 'MEDICAL'
   | 'FAMILY_EMERGENCY'
   | 'TUITION';
 
 export const PURPOSE_LABEL: Record<EquityPurpose, string> = {
-  HOME_IMPROVEMENT: 'Home improvement',
-  HOME_RENOVATION: 'Home renovation',
-  MEDICAL: 'Medical expenses',
-  FAMILY_EMERGENCY: 'Family emergency',
-  TUITION: 'Tuition payments'
+  HOME_IMPROVEMENT_RENOVATION: 'Home improvement/renovation',
+  MEDICAL: 'Medical situation',
+  FAMILY_EMERGENCY: 'Family Emergencies',
+  TUITION: 'Payment of Tuition'
 };
 
 export interface UserContext {
@@ -451,6 +449,12 @@ export interface MortgageCase {
   purchase?: HomePurchaseDetails;
   equity?: EquityDetails;
   consent: ConsentSet;
+  /** Answers to the bank's Mortgage Application Form, keyed by formDef field keys. */
+  form?: { [key: string]: string | boolean };
+  /** Customer Asset Valuation Form, sent to the Collateral Maintenance Unit. */
+  valuationRequest?: { sentAt?: string; fields: { [key: string]: string } };
+  /** Search request, sent by mail to the Mortgage Unit. */
+  searchRequest?: { sentAt?: string };
   propertyId?: string;
   ownerName: string;
   createdAt: string;

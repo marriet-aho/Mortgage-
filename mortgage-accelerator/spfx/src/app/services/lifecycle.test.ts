@@ -254,11 +254,11 @@ describe('eligibility step and OTP', () => {
     api.setRole('APPLICANT');
     const d = await api.createDraft('HOME_PURCHASE');
     const prof = await api.verifyOtp('1234567890123', '123456');
-    const input = { loanType: 'HOME_PURCHASE' as const, accountNumber: '1234567890123', dateOfBirth: prof.dateOfBirth, netSalary: prof.netSalary, allowances: prof.allowances, loanAmount: 2000000, instalmentPersonal: prof.instalmentPersonal, instalmentMortgageHp: 0, payOffExistingLoans: false };
+    const input = { loanType: 'HOME_PURCHASE' as const, accountNumber: '1234567890123', dateOfBirth: prof.dateOfBirth, netSalary: prof.netSalary, allowances: prof.allowances, loanAmount: 6000000, instalmentPersonal: prof.instalmentPersonal, instalmentMortgageHp: 0, payOffExistingLoans: false };
     const r = await api.computeEligibility(d.id, input, true);
     expect(r.decisionRule).toBe('EXCEEDS_DIR_LIMIT');
     const c = await api.getCase(d.id);
-    expect(c.amountRequested).toBe(2000000);
+    expect(c.amountRequested).toBe(6000000);
     expect(c.eligibility && c.eligibility.exceptionalApproval).toBe(true);
     expect(c.financials.basicSalary).toBe(prof.netSalary);
   });

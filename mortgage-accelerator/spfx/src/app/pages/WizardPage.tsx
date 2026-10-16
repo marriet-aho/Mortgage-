@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { useApp } from '../context';
 import { DocumentsPanel, ReadinessPanel } from '../components/panels';
-import { Button, CheckField, Chip, ErrorNote, Head, Loading, Note, NumberField, Panel, Progress, RadioField, ScoreRing, Section, SelectField, TextArea, TextField } from '../components/ui';
-import { documentCompleteness } from '../domain/documents';
-import { instalment, maxEquityRelease, maxTenorYears, minDownPayment, netIncome, ltvPct } from '../domain/rules';
+import { AssetsSection, ConsentLetter, DeclarationSection, FeesPanel, FormSection, SearchSection, ValuationSection } from '../components/formSections';
+import { FormValues, STEPS as FORM_STEPS, VALUATION_FORM, numOf, str, validateForm } from '../domain/formDef';
+import { Button, Chip, ErrorNote, Head, Loading, Note, Panel, Progress, ScoreRing } from '../components/ui';
+import { docLabel, documentCompleteness } from '../domain/documents';
+import { minDownPayment } from '../domain/rules';
 import { DraftPatch } from '../services/client';
-import { MortgageCase, PRODUCT_LABEL, PURPOSE_LABEL, EquityPurpose, ProductCode } from '../domain/types';
+import { EquityPurpose, MortgageCase, PRODUCT_LABEL, ProductCode } from '../domain/types';
 import { money } from '../format';
 import { EligibilityPhase } from './EligibilityPhase';
 
@@ -31,49 +33,89 @@ function PhaseBar(p: { phase: number }): JSX.Element {
   );
 }
 
-const STEPS = ['Applicant', 'Request', 'Finances', 'Consent', 'Documents', 'Review and submit'];
+const STEP_IDS = FORM_STEPS.map(function (x) { return x.id; });
+const LAST = FORM_STEPS.length - 1;
 
 type Errors = { [k: string]: string };
 
-function validate(c: MortgageCase, step: number): Errors {
-  const e: Errors = {};
-  const need = function (k: string, ok: boolean, msg: string): void { if (!ok) { e[k] = msg; } };
+/** Answers the system already knows, filled in once so nobody types them twice. */
+function prefill(c: MortgageCase): FormValues {
   const a = c.applicant;
-  if (step === 0) {
-    need('nationalId', /^GHA-\d{9}-\d$/i.test(a.nationalId), 'Use the Ghana Card format GHA-123456789-0');
-    need('phone', /^\+?[\d ]{9,15}$/.test(a.phone), 'Enter 9 to 15 digits');
-    need('email', /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(a.email), 'Enter a full email address');
-    need('address', a.address.trim().length > 5, 'Enter your residential address');
-  }
-  if (step === 1) {
-    need('amountRequested', c.amountRequested > 0, 'Enter the amount you need');
-    need('tenorYears', c.tenorYears > 0, 'Enter a tenor in years');
-    const cap = maxTenorYears(c.product, a.retirementDate, new Date());
-    need('tenorYears', c.tenorYears <= cap, 'The longest tenor before retirement is ' + cap + ' years');
-    if (c.purchase) {
-      need('purchasePrice', c.purchase.purchasePrice > 0, 'Enter the purchase price');
-      need('propertyValue', c.purchase.propertyValue > 0, 'Enter the property value');
-      need('downPayment', c.purchase.downPayment >= minDownPayment(c.purchase.purchasePrice) - 0.005, 'The minimum down payment is 20% (' + money(minDownPayment(c.purchase.purchasePrice)) + ')');
-      need('vendorName', c.purchase.vendorName.trim().length > 1, 'Enter the vendor or developer name');
-      need('amountRequested', c.amountRequested <= c.purchase.purchasePrice - c.purchase.downPayment + 0.005, 'The loan plus the down payment cannot exceed the price');
+  const parts = a.fullName.split(' ');
+  const f: FormValues = { currency: 'CEDI', has_co: !!c.coBorrowerName };
+  const put = function (k: string, v: string): void { if (v) { f[k] = v; } };
+  put('b_first_name', parts[0]);
+  put('b_last_name', parts.length > 1 ? parts[parts.length - 1] : '');
+  put('b_middle_name', parts.slice(1, -1).join(' '));
+  put('b_dob', a.dateOfBirth);
+  put('b_national_id', a.nationalId);
+  put('b_cell', a.phone);
+  put('b_email', a.email);
+  put('b_address', a.address);
+  put('b_occupation', a.position);
+  put('b_employer', 'Fidelity Bank Ghana Limited');
+  put('b_employer_address', 'PMB 43, Cantonments-Accra');
+  put('b_property_use', 'Primary residence');
+  put('v_contact', a.fullName);
+  put('v_contact_no', a.phone);
+  put('v_sign_name', a.fullName);
+  put('ref_borrower_name', a.fullName);
+  put('ref_contact_tel', a.phone);
+  put('consent_name', a.fullName);
+  return f;
+}
+
+/** What the rules engine needs, derived from the form answers. */
+function derive(c: MortgageCase, f: FormValues): DraftPatch {
+  const out: DraftPatch = {
+    applicant: { nationalId: str(f, 'b_national_id') || c.applicant.nationalId, phone: str(f, 'b_cell') || c.applicant.phone, email: str(f, 'b_email') || c.applicant.email, address: str(f, 'b_address') || c.applicant.address },
+    consent: {
+      creditBureau: f.consent_a === true && f.consent_b === true,
+      identity: f.consent_d === true,
+      dataProcessing: f.consent_c === true,
+      regulatory: f.declaration === true,
+      informationSharing: f.declaration === true
     }
-    if (c.equity) {
-      need('declaredValue', c.equity.declaredValue > 0, 'Enter the value of your property');
-      if (c.equity.forcedSaleValue) {
-        const m = maxEquityRelease(c.equity.forcedSaleValue, c.equity.existingMortgageBalance);
-        need('amountRequested', c.amountRequested <= m + 0.005, 'The maximum release is ' + money(m) + ' (70% of forced sale value less your existing mortgage)');
-      }
-      const total = c.equity.useOfFunds.reduce(function (s, u) { return s + u.amount; }, 0);
-      need('useOfFunds', Math.abs(total - c.amountRequested) < 0.5, 'The use of funds must add up to the amount requested');
-    }
+  };
+  if (c.product === 'HOME_PURCHASE') {
+    const price = numOf(f, 'purchase_price');
+    out.purchase = {
+      purchasePrice: price, propertyValue: price, downPayment: numOf(f, 'down_payment'),
+      vendorName: str(f, 'developer').split('\n')[0],
+      vendorType: str(f, 'vendor_type') === 'PRIVATE' ? 'PRIVATE' : 'DEVELOPER',
+      constructionStatus: f.in_construction === true ? 'UNDER_CONSTRUCTION' : 'COMPLETED'
+    };
+  } else {
+    const purpose = (str(f, 'purpose') || 'HOME_IMPROVEMENT_RENOVATION') as EquityPurpose;
+    out.equity = {
+      declaredValue: numOf(f, 'declared_value'), purpose,
+      ownership: 'SOLE',
+      useOfFunds: [{ item: str(f, 'use_of_funds') || purpose, amount: c.amountRequested }]
+    };
   }
-  if (step === 2) {
-    need('basicSalary', c.financials.basicSalary > 0, 'Enter your basic salary');
-    need('deductions', c.financials.deductions >= 0, 'Enter your monthly deductions');
+  return out;
+}
+
+function stepErrors(c: MortgageCase, f: FormValues, stepId: string): Errors {
+  const e: Errors = {};
+  validateForm(c.product, f).filter(function (i) { return i.step === stepId; }).forEach(function (i) { e[i.key] = i.message; });
+  if (stepId === 'property' && c.product === 'HOME_PURCHASE') {
+    const price = numOf(f, 'purchase_price');
+    if (price > 0 && numOf(f, 'down_payment') < minDownPayment(price) - 0.005) { e.down_payment = 'Down payment - (20% Minimum): at least ' + money(minDownPayment(price)); }
   }
-  if (step === 3) {
-    need('consent', c.consent.creditBureau && c.consent.identity && c.consent.dataProcessing && c.consent.regulatory, 'The four required consents must be accepted');
-    need('signName', c.consent.signedBy === c.applicant.fullName || !!c.consent.signedAt, 'Type your full name to sign');
+  if (stepId === 'requests') {
+    VALUATION_FORM.fields.forEach(function (d) { if (d.req && !str(f, d.key).trim()) { e[d.key] = d.label.split(':')[0] + ' is required'; } });
+    if (!str(f, 'sig_valuation')) { e.sig_valuation = 'Sign the valuation form (Authorized Signature)'; }
+    if (!(c.valuationRequest && c.valuationRequest.sentAt)) { e.valuation_sent = 'Send the valuation form to the Collateral Maintenance Unit'; }
+    if (c.product === 'HOME_PURCHASE' && !(c.searchRequest && c.searchRequest.sentAt)) { e.search_sent = 'Send the search request to the Mortgage Unit'; }
+  }
+  if (stepId === 'consent') {
+    if (!(f.consent_a === true && f.consent_b === true && f.consent_c === true && f.consent_d === true)) { e.consent = 'Tick all four consents (a to d)'; }
+    if (!str(f, 'sig_consent')) { e.sig_consent = 'Sign the consent letter'; }
+    if (!str(f, 'sig_application_b')) { e.sig_application_b = 'Sign the application form (Signature of Borrower)'; }
+    if (f.has_co === true && !str(f, 'sig_application_c')) { e.sig_application_c = 'The Co-Borrower must also sign'; }
+    if (!str(f, 'consent_name').trim()) { e.consent_name = 'Name is required'; }
+    if (f.declaration !== true) { e.declaration = 'You must agree to the declaration'; }
   }
   return e;
 }
@@ -88,10 +130,10 @@ export function WizardPage(): JSX.Element {
   const [step, setStep] = React.useState(0);
   const [errors, setErrors] = React.useState<Errors>({});
   const [saved, setSaved] = React.useState('');
-  const [signName, setSignName] = React.useState('');
   const [phase, setPhase] = React.useState(0);
   const [doneRef, setDoneRef] = React.useState('');
   const [docsPct, setDocsPct] = React.useState(0);
+  const [form, setForm] = React.useState<FormValues>({});
   const timer = React.useRef<number | undefined>(undefined);
   const pending = React.useRef<DraftPatch>({});
 
@@ -101,7 +143,7 @@ export function WizardPage(): JSX.Element {
     load.then(function (d) {
       if (!live) { return; }
       setC(d);
-      setSignName(d.consent.signedBy || '');
+      setForm({ ...prefill(d), ...(d.form || {}) });
       setPhase(d.eligibility || caseId ? 1 : 0);
     }, function (e) { setError(String(e)); });
     return function () { live = false; };
@@ -129,7 +171,9 @@ export function WizardPage(): JSX.Element {
       financials: { ...(p.financials || {}), ...(patch.financials || {}) },
       purchase: { ...(p.purchase || {}), ...(patch.purchase || {}) },
       equity: { ...(p.equity || {}), ...(patch.equity || {}) },
-      consent: { ...(p.consent || {}), ...(patch.consent || {}) }
+      consent: { ...(p.consent || {}), ...(patch.consent || {}) },
+      form: { ...(p.form || {}), ...(patch.form || {}) },
+      valuationFields: { ...(p.valuationFields || {}), ...(patch.valuationFields || {}) }
     };
     setSaved('Saving…');
     window.clearTimeout(timer.current);
@@ -143,28 +187,42 @@ export function WizardPage(): JSX.Element {
     }, 400);
   };
 
-  const change = function (patch: DraftPatch): void {
+  const setField = function (patch: FormValues): void {
+    const next: FormValues = { ...form, ...patch };
+    setForm(next);
+    const valuation: { [k: string]: string } = {};
+    Object.keys(patch).forEach(function (k) { if (k.indexOf('v_') === 0) { valuation[k] = String(patch[k]); } });
+    const d = derive(c, next);
     setC(function (cur) {
       if (!cur) { return cur; }
-      const next: MortgageCase = { ...cur };
-      if (patch.applicant) { next.applicant = { ...cur.applicant, ...patch.applicant }; }
-      if (patch.financials) { next.financials = { ...cur.financials, ...patch.financials }; }
-      if (patch.purchase && cur.purchase) { next.purchase = { ...cur.purchase, ...patch.purchase }; }
-      if (patch.equity && cur.equity) { next.equity = { ...cur.equity, ...patch.equity }; }
-      if (patch.consent) { next.consent = { ...cur.consent, ...patch.consent }; }
-      if (patch.amountRequested !== undefined) { next.amountRequested = patch.amountRequested; }
-      if (patch.tenorYears !== undefined) { next.tenorYears = patch.tenorYears; }
-      if (patch.currency) { next.currency = patch.currency; }
-      return next;
+      return { ...cur, applicant: { ...cur.applicant, ...(d.applicant || {}) }, consent: { ...cur.consent, ...(d.consent || {}) }, purchase: cur.purchase ? { ...cur.purchase, ...(d.purchase || {}) } : cur.purchase, equity: cur.equity ? { ...cur.equity, ...(d.equity || {}) } : cur.equity };
     });
-    queueSave(patch);
+    const filed = function (key: string, docType: string, category: 'APPLICATION' | 'CONSENT', name: string, ready: boolean): void {
+      if (patch[key] === undefined || !ready) { return; }
+      if (!patch[key]) { return; }
+      app.client.uploadDocument(c.id, docType, category, { name: name, sizeKb: 96 }).then(function () { app.bump(); app.toast(docLabel(docType) + ' signed and filed.'); }, function (e) { app.toast(String(e)); });
+    };
+    filed('sig_consent', 'CONSENT_FORM', 'CONSENT', 'customer-consent-letter-e-signed.pdf', true);
+    filed('sig_application_b', 'APPLICATION_FORM', 'APPLICATION', 'mortgage-application-form-e-signed.pdf', next.has_co !== true || !!str(next, 'sig_application_c'));
+    filed('sig_application_c', 'APPLICATION_FORM', 'APPLICATION', 'mortgage-application-form-e-signed.pdf', !!str(next, 'sig_application_b'));
+    queueSave({ ...d, form: patch, valuationFields: Object.keys(valuation).length ? valuation : undefined });
+  };
+
+  const send = function (kind: 'valuation' | 'search'): void {
+    window.clearTimeout(timer.current);
+    const toSend: DraftPatch = { ...pending.current, ...(kind === 'valuation' ? { sendValuationRequest: true } : { sendSearchRequest: true }) };
+    pending.current = {};
+    app.client.saveDraft(c.id, toSend).then(function (d) {
+      setC(d);
+      app.toast(kind === 'valuation' ? 'Valuation form sent to the Collateral Maintenance Unit.' : 'Search request sent to the Mortgage Unit.');
+    }, function (e) { app.toast(String(e)); });
   };
 
   const go = function (n: number): void {
     if (n > step) {
-      const e = validate(c, step);
+      const e = stepErrors(c, form, STEP_IDS[step]);
       setErrors(e);
-      if (Object.keys(e).length) { app.toast('Check the highlighted answers.'); return; }
+      if (Object.keys(e).length) { app.toast(Object.keys(e).length + ' answer(s) need attention: ' + e[Object.keys(e)[0]]); return; }
     }
     setErrors({});
     setStep(n);
@@ -172,8 +230,9 @@ export function WizardPage(): JSX.Element {
   };
 
   const submit = function (): void {
-    for (let i = 0; i < 4; i++) {
-      const e = validate(c, i);
+    for (let i = 0; i < LAST - 1; i++) {
+      if (i === 6) { continue; }
+      const e = stepErrors(c, form, STEP_IDS[i]);
       if (Object.keys(e).length) { setStep(i); setErrors(e); app.toast('Step ' + (i + 1) + ' needs attention.'); return; }
     }
     window.clearTimeout(timer.current);
@@ -188,13 +247,7 @@ export function WizardPage(): JSX.Element {
     }, function (e) { app.toast(e instanceof Error ? e.message : String(e)); });
   };
 
-  const a = c.applicant;
-  const f = c.financials;
-  const net = netIncome(f);
-  const pay = instalment(c.amountRequested, c.ratePct, c.tenorYears);
-  const tenorCap = maxTenorYears(c.product, a.retirementDate, new Date());
   const r = c.readiness;
-  const err = function (k: string): string | undefined { return errors[k]; };
 
   if (phase === 0) {
     return (
@@ -228,123 +281,71 @@ export function WizardPage(): JSX.Element {
 
   return (
     <>
-      <Head title={'Apply: ' + PRODUCT_LABEL[c.product]} sub="Six short steps. Your draft saves as you type, and your readiness updates as you go."
+      <Head title={'Apply: ' + PRODUCT_LABEL[c.product]} sub="The questions are the ones on the bank&rsquo;s Mortgage Application Form, word for word. Your draft saves as you type."
         actions={<span className="small muted" aria-live="polite">{saved}</span>} />
       <PhaseBar phase={1} />
       {c.returnedNote ? <Note tone="need"><b>Returned for correction.</b> {c.returnedNote}</Note> : null}
       {c.eligibility ? <Note>Eligibility: DIR {c.eligibility.result.dirAllStaffLoansPct.toFixed(1)}% against a {c.eligibility.result.dirLimitPct}% limit · qualifies for {money(c.eligibility.result.loanAmountQualifiedFor)}{c.eligibility.exceptionalApproval ? ' · exceptional approval requested' : ''}.</Note> : null}
-      <Progress pct={((step + (step === 5 ? 1 : 0)) / STEPS.length) * 100} label={'Step ' + (step + 1) + ' of ' + STEPS.length} />
+      <Progress pct={((step + (step === LAST ? 1 : 0)) / FORM_STEPS.length) * 100} label={'Step ' + (step + 1) + ' of ' + FORM_STEPS.length} />
       <div className="ma-steps" aria-label="Steps">
-        {STEPS.map(function (s, i) { return <button key={s} type="button" className={'ma-step' + (i === step ? ' on' : i < step ? ' done' : '')} onClick={function () { go(i); }}>{i + 1}. {s}</button>; })}
+        {FORM_STEPS.map(function (s, i) { return <button key={s.id} type="button" className={'ma-step' + (i === step ? ' on' : i < step ? ' done' : '')} onClick={function () { go(i); }}>{i + 1}. {s.title}</button>; })}
       </div>
       <div className="ma-grid2">
         <div className="ma-stack">
-          <Section title={STEPS[step]}>
-            <div className="ma-fgrid">
-              {step === 0 ? (
-                <>
-                  <TextField id="w-emp" label="Employee number" value={a.employeeNo} readOnly onChange={function () { /* from HR */ }} hint="From the HR system" />
-                  <TextField id="w-staff" label="Staff ID" value={a.staffId} readOnly onChange={function () { /* from HR */ }} />
-                  <TextField id="w-name" label="Full name" value={a.fullName} readOnly onChange={function () { /* from HR */ }} />
-                  <TextField id="w-dept" label="Department and position" value={a.department + ' · ' + a.position} readOnly onChange={function () { /* from HR */ }} />
-                  <TextField id="w-emps" label="Employment status" value={a.employmentStatus.toLowerCase()} readOnly onChange={function () { /* from HR */ }} hint={'Employed since ' + a.dateEmployed + '. Retires ' + a.retirementDate + '.'} />
-                  <TextField id="w-dob" label="Date of birth" type="date" value={a.dateOfBirth} readOnly onChange={function () { /* from HR */ }} />
-                  <TextField id="w-nid" label="National ID number" required value={a.nationalId} error={err('nationalId')} hint="Ghana Card: GHA-123456789-0" onChange={function (v) { change({ applicant: { nationalId: v } }); }} />
-                  <TextField id="w-phone" label="Mobile number" type="tel" required value={a.phone} error={err('phone')} onChange={function (v) { change({ applicant: { phone: v } }); }} />
-                  <TextField id="w-email" label="Personal email" type="email" required value={a.email} error={err('email')} onChange={function (v) { change({ applicant: { email: v } }); }} />
-                  <SelectField id="w-ms" label="Marital status" required value={a.maritalStatus} options={[['SINGLE', 'Single'], ['MARRIED', 'Married'], ['DIVORCED', 'Divorced'], ['WIDOWED', 'Widowed']]} hint={a.maritalStatus === 'MARRIED' ? 'Spousal consent will be a condition.' : undefined} onChange={function (v) { change({ applicant: { maritalStatus: (v || 'SINGLE') as MortgageCase['applicant']['maritalStatus'] } }); }} />
-                  <TextArea id="w-addr" label="Residential address" required wide value={a.address} error={err('address')} onChange={function (v) { change({ applicant: { address: v } }); }} />
-                </>
-              ) : null}
-              {step === 1 && c.purchase ? (
-                <>
-                  <SelectField id="w-cur" label="Currency" required value={c.currency} options={[['GHS', 'Cedi (GHS)'], ['USD', 'US Dollar'], ['EUR', 'Euro']]} onChange={function (v) { change({ currency: (v || 'GHS') as 'GHS' | 'USD' | 'EUR' }); }} />
-                  <RadioField id="w-vt" label="Vendor type" required value={c.purchase.vendorType} options={[['DEVELOPER', 'Developer'], ['PRIVATE', 'Private vendor']]} hint={c.purchase.vendorType === 'PRIVATE' ? 'A vendor due-diligence form will be sent to the vendor.' : undefined} onChange={function (v) { change({ purchase: { vendorType: v as 'DEVELOPER' | 'PRIVATE' } }); }} />
-                  <TextField id="w-vn" label="Vendor or developer name" required value={c.purchase.vendorName} error={err('vendorName')} onChange={function (v) { change({ purchase: { vendorName: v } }); }} />
-                  <SelectField id="w-cs" label="Property status" required value={c.purchase.constructionStatus} options={[['COMPLETED', 'Completed'], ['UNDER_CONSTRUCTION', 'Under construction'], ['OFF_PLAN', 'Off-plan']]} onChange={function (v) { change({ purchase: { constructionStatus: (v || 'COMPLETED') as 'COMPLETED' | 'UNDER_CONSTRUCTION' | 'OFF_PLAN' } }); }} />
-                  <NumberField id="w-pp" label="Purchase price" required value={c.purchase.purchasePrice} error={err('purchasePrice')} onChange={function (v) { change({ purchase: { purchasePrice: v, propertyValue: c.purchase && c.purchase.propertyValue ? c.purchase.propertyValue : v } }); }} />
-                  <NumberField id="w-pv" label="Property value" required value={c.purchase.propertyValue} error={err('propertyValue')} onChange={function (v) { change({ purchase: { propertyValue: v } }); }} />
-                  <NumberField id="w-dp" label="Down payment" required value={c.purchase.downPayment} error={err('downPayment')} hint={'At least 20%: ' + money(minDownPayment(c.purchase.purchasePrice))} onChange={function (v) { change({ purchase: { downPayment: v } }); }} />
-                  <NumberField id="w-amt" label="Amount requested" required value={c.amountRequested} error={err('amountRequested')} hint={c.purchase.purchasePrice ? 'Price less down payment: ' + money(Math.max(0, c.purchase.purchasePrice - c.purchase.downPayment)) : undefined} onChange={function (v) { change({ amountRequested: v }); }} />
-                  <NumberField id="w-ten" label="Tenor (years)" required value={c.tenorYears} error={err('tenorYears')} hint={'Up to ' + tenorCap + ' years, limited by your retirement date.'} onChange={function (v) { change({ tenorYears: v }); }} />
-                  <div className="ma-calc">
-                    <div className={c.purchase.purchasePrice && c.purchase.downPayment < minDownPayment(c.purchase.purchasePrice) ? 'warn' : ''}><b>{c.purchase.purchasePrice ? ((c.purchase.downPayment / c.purchase.purchasePrice) * 100).toFixed(1) + '%' : '—'}</b><span>Down payment (minimum 20%)</span></div>
-                    <div><b>{c.purchase.propertyValue ? ltvPct(c.amountRequested, c.purchase.propertyValue).toFixed(1) + '%' : '—'}</b><span>Loan to value</span></div>
-                    <div><b>{pay ? money(pay, c.currency) : '—'}</b><span>Estimated monthly repayment</span></div>
-                  </div>
-                </>
-              ) : null}
-              {step === 1 && c.equity ? (
-                <>
-                  <SelectField id="w-cur" label="Currency" required value={c.currency} options={[['GHS', 'Cedi (GHS)'], ['USD', 'US Dollar'], ['EUR', 'Euro']]} onChange={function (v) { change({ currency: (v || 'GHS') as 'GHS' | 'USD' | 'EUR' }); }} />
-                  <SelectField id="w-pur" label="Purpose of release" required value={c.equity.purpose} options={(Object.keys(PURPOSE_LABEL) as EquityPurpose[]).map(function (k) { return [k, PURPOSE_LABEL[k]] as [string, string]; })} onChange={function (v) { change({ equity: { purpose: (v || 'HOME_RENOVATION') as EquityPurpose } }); }} />
-                  <NumberField id="w-dv" label="Property value (your estimate)" required value={c.equity.declaredValue} error={err('declaredValue')} hint="Confirmed by a valuation later" onChange={function (v) { change({ equity: { declaredValue: v } }); }} />
-                  <RadioField id="w-own" label="Ownership" required value={c.equity.ownership} options={[['SOLE', 'Sole owner'], ['JOINT', 'Joint owner']]} hint={c.equity.ownership === 'JOINT' ? 'The co-owner must sign the mortgage documents.' : 'The property must be registered in your name.'} onChange={function (v) { change({ equity: { ownership: v as 'SOLE' | 'JOINT' } }); }} />
-                  <RadioField id="w-ems" label="Existing mortgage" required value={c.equity.existingMortgageStatus} options={[['NONE', 'None'], ['THIS_BANK', 'With this bank'], ['OTHER_LENDER', 'With another lender']]} onChange={function (v) { change({ equity: { existingMortgageStatus: v as 'NONE' | 'THIS_BANK' | 'OTHER_LENDER', existingMortgageBalance: v === 'NONE' ? 0 : c.equity ? c.equity.existingMortgageBalance : 0 } }); }} />
-                  {c.equity.existingMortgageStatus !== 'NONE' ? <NumberField id="w-emb" label="Outstanding mortgage balance" required value={c.equity.existingMortgageBalance} onChange={function (v) { change({ equity: { existingMortgageBalance: v } }); }} /> : null}
-                  <NumberField id="w-amt" label="Amount requested" required value={c.amountRequested} error={err('amountRequested')} onChange={function (v) { change({ amountRequested: v, equity: { useOfFunds: [{ item: c.equity && c.equity.useOfFunds[0] ? c.equity.useOfFunds[0].item : PURPOSE_LABEL[c.equity ? c.equity.purpose : 'HOME_RENOVATION'], amount: v }] } }); }} />
-                  <NumberField id="w-ten" label="Tenor (years)" required value={c.tenorYears} error={err('tenorYears')} hint={'Up to ' + tenorCap + ' years'} onChange={function (v) { change({ tenorYears: v }); }} />
-                  <TextField id="w-use" label="What the money is for (request letter)" required wide value={c.equity.useOfFunds[0] ? c.equity.useOfFunds[0].item : ''} error={err('useOfFunds')} hint="Describe the intended use. Evidence is uploaded in the Documents step." onChange={function (v) { change({ equity: { useOfFunds: [{ item: v, amount: c.amountRequested }] } }); }} />
-                  <div className="ma-calc">
-                    <div><b>{money(c.equity.forcedSaleValue ? maxEquityRelease(c.equity.forcedSaleValue, c.equity.existingMortgageBalance) : maxEquityRelease(c.equity.declaredValue * 0.8, c.equity.existingMortgageBalance), c.currency)}</b><span>{c.equity.forcedSaleValue ? 'Maximum release: 70% of forced sale value less existing mortgage' : 'Indicative maximum, until the valuation gives the forced sale value'}</span></div>
-                    <div><b>{pay ? money(pay, c.currency) : '—'}</b><span>Estimated monthly repayment</span></div>
-                    <div><b>{c.equity.declaredValue ? ltvPct(c.amountRequested + c.equity.existingMortgageBalance, c.equity.declaredValue).toFixed(0) + '%' : '—'}</b><span>Total borrowing against your value</span></div>
-                  </div>
-                </>
-              ) : null}
-              {step === 2 ? (
-                <>
-                  <div className="ma-sub">Monthly income</div>
-                  <NumberField id="w-bs" label="Basic salary" required value={f.basicSalary} error={err('basicSalary')} onChange={function (v) { change({ financials: { basicSalary: v } }); }} />
-                  <NumberField id="w-al" label="Allowances" value={f.allowances} onChange={function (v) { change({ financials: { allowances: v } }); }} />
-                  <NumberField id="w-oi" label="Other income" value={f.otherIncome} hint="Evidence may be requested" onChange={function (v) { change({ financials: { otherIncome: v } }); }} />
-                  <NumberField id="w-de" label="Tax, pension and other deductions" required value={f.deductions} onChange={function (v) { change({ financials: { deductions: v } }); }} />
-                  <div className="ma-sub">Monthly commitments</div>
-                  <NumberField id="w-lr" label="Repayments on existing loans" value={f.existingLoanRepayments} onChange={function (v) { change({ financials: { existingLoanRepayments: v } }); }} />
-                  <NumberField id="w-oc" label="Rent, maintenance and other commitments" value={f.otherCommitments} onChange={function (v) { change({ financials: { otherCommitments: v } }); }} />
-                  <div className="ma-sub">Assets and liabilities</div>
-                  <NumberField id="w-as" label="Total assets (savings, investments, vehicles, property)" value={f.assetsTotal} onChange={function (v) { change({ financials: { assetsTotal: v } }); }} />
-                  <NumberField id="w-li" label="Total liabilities (loans, mortgages)" value={f.liabilitiesTotal} onChange={function (v) { change({ financials: { liabilitiesTotal: v } }); }} />
-                  <div className="ma-calc">
-                    <div><b>{money(net, c.currency)}</b><span>Net monthly income</span></div>
-                    <div className={r && r.dsrPct > 50 ? 'warn' : ''}><b>{r ? r.dsrPct.toFixed(0) + '%' : '—'}</b><span>Debt service ratio with this mortgage (limit 50%)</span></div>
-                    <div><b>{money(f.assetsTotal - f.liabilitiesTotal, c.currency)}</b><span>Net worth</span></div>
-                  </div>
-                </>
-              ) : null}
-              {step === 3 ? (
-                <>
-                  <div className="ma-f wide"><Note>We ask for your permission before we check your credit and verify your details. You can withdraw consent later, which stops the steps that depend on it.</Note></div>
-                  <div className="ma-f wide" style={{ gap: 8 }}>
-                    <CheckField id="k1" label="Credit bureau: check my credit record (required)" checked={c.consent.creditBureau} onChange={function (v) { change({ consent: { creditBureau: v } }); }} />
-                    <CheckField id="k2" label="Identity verification: verify my Ghana Card (required)" checked={c.consent.identity} onChange={function (v) { change({ consent: { identity: v } }); }} />
-                    <CheckField id="k3" label="Data processing: store and process my information (required)" checked={c.consent.dataProcessing} onChange={function (v) { change({ consent: { dataProcessing: v } }); }} />
-                    <CheckField id="k4" label="Regulatory: share information where the law requires (required)" checked={c.consent.regulatory} onChange={function (v) { change({ consent: { regulatory: v } }); }} />
-                    <CheckField id="k5" label="Information sharing: share with valuers, lawyers, insurers and the Lands Commission" checked={c.consent.informationSharing} onChange={function (v) { change({ consent: { informationSharing: v } }); }} />
-                    {err('consent') ? <span className="err" style={{ color: '#A04000', fontWeight: 600 }}>{err('consent')}</span> : null}
-                  </div>
-                  <TextField id="w-sign" label="Electronic signature: type your full name" required value={signName} error={err('signName')} hint={'Signing as ' + a.fullName + '. A time stamp, device and consent text version are recorded.'} onChange={function (v) { setSignName(v); change({ consent: { signedBy: v.trim() === a.fullName ? a.fullName : '' } }); }} />
-                  <TextField id="w-co" label="Co-borrower (optional)" value={c.coBorrowerName || ''} hint="They will receive a secure link to verify and sign separately." onChange={function (v) { setC(function (cur) { return cur ? { ...cur, coBorrowerName: v } : cur; }); queueSave({ coBorrowerName: v }); }} />
-                </>
-              ) : null}
-              {step === 4 ? <div className="ma-f wide"><DocumentsPanel c={c} canUpload canRequest={false} /></div> : null}
-              {step === 5 && r ? (
-                <>
-                  <div className="ma-f wide"><ReadinessPanel result={r} /></div>
-                  <div className="ma-f wide"><Panel title="Before you submit">
-                    <ul style={{ margin: 0, paddingLeft: 18 }}>
-                      <li>{docsPct >= 100 ? 'All required documents are attached.' : 'Required documents are still missing (' + Math.round(docsPct) + '% attached). Go back to Documents.'}</li>
-                      <li>{r.hardStops.length ? 'Fix the items marked “must be fixed first”.' : 'No blocking issues.'}</li>
-                      <li>Submitting locks the application. A Mortgage Officer can return it to you if something needs correcting.</li>
-                    </ul>
-                  </Panel></div>
-                </>
-              ) : null}
-            </div>
-          </Section>
+          {step === 0 ? (
+            <>
+              <FormSection id="type" product={c.product} f={form} set={setField} errs={errors} />
+              <FormSection id="personal" product={c.product} f={form} set={setField} errs={errors} />
+            </>
+          ) : null}
+          {step === 1 ? (
+            <>
+              {['employment', 'references', 'selfemp', 'previous', 'bank'].map(function (id) { return <FormSection key={id} id={id} product={c.product} f={form} set={setField} errs={errors} />; })}
+            </>
+          ) : null}
+          {step === 2 ? (
+            <>
+              <FormSection id="existing" product={c.product} f={form} set={setField} errs={errors} />
+              <AssetsSection f={form} set={setField} />
+            </>
+          ) : null}
+          {step === 3 ? (
+            <>
+              {['property', 'insurance', 'poa'].map(function (id) { return <FormSection key={id} id={id} product={c.product} f={form} set={setField} errs={errors} />; })}
+              <FeesPanel product={c.product} propertyValue={c.purchase ? c.purchase.propertyValue : c.equity ? c.equity.declaredValue : 0} />
+            </>
+          ) : null}
+          {step === 4 ? (
+            <>
+              <ValuationSection f={form} set={setField} errs={errors} sent={c.valuationRequest && c.valuationRequest.sentAt} signer={c.applicant.fullName} canSend={!!str(form, 'sig_valuation') && VALUATION_FORM.fields.every(function (d) { return !d.req || !!str(form, d.key).trim(); })} onSend={function () { send('valuation'); }} />
+              {errors.valuation_sent ? <span style={{ color: '#A04000', fontWeight: 600 }}>{errors.valuation_sent}</span> : null}
+              <SearchSection sent={c.searchRequest && c.searchRequest.sentAt} ready onSend={function () { send('search'); }} />
+              {errors.search_sent ? <span style={{ color: '#A04000', fontWeight: 600 }}>{errors.search_sent}</span> : null}
+            </>
+          ) : null}
+          {step === 5 ? (
+            <>
+              <ConsentLetter f={form} set={setField} errs={errors} name={c.applicant.fullName} />
+              <DeclarationSection f={form} set={setField} errs={errors} name={c.applicant.fullName} coName={form.has_co === true ? (str(form, 'c_first_name') + ' ' + str(form, 'c_last_name')).trim() || 'Co-Borrower' : undefined} />
+              <Panel title="Co-borrower"><div className="small muted">A Co-Borrower is added in step 1 (“There is a Co-Borrower”). They receive a secure link to verify and sign separately.</div></Panel>
+            </>
+          ) : null}
+          {step === 6 ? <DocumentsPanel c={c} canUpload canRequest={false} /> : null}
+          {step === 7 && r ? (
+            <>
+              <ReadinessPanel result={r} />
+              <Panel title="Before you submit">
+                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  <li>{docsPct >= 100 ? 'All required pre-approval documents are attached.' : 'Required documents are still missing (' + Math.round(docsPct) + '% attached). Go back to Pre-approval documents.'}</li>
+                  <li>{r.hardStops.length ? 'Fix the items marked “must be fixed first”.' : 'No blocking issues.'}</li>
+                  <li>Submitting locks the application. A Mortgage Officer can return it to you if something needs correcting.</li>
+                </ul>
+              </Panel>
+            </>
+          ) : null}
           <div className="ma-row" style={{ justifyContent: 'space-between' }}>
             <Button disabled={step === 0} onClick={function () { go(step - 1); }}>Back</Button>
-            {step < 5 ? <Button primary onClick={function () { go(step + 1); }}>Continue</Button> : <Button primary disabled={!r || r.hardStops.length > 0 || docsPct < 100} onClick={submit}>Submit application</Button>}
+            {step < LAST ? <Button primary onClick={function () { go(step + 1); }}>Continue</Button> : <Button primary disabled={!r || r.hardStops.length > 0 || docsPct < 100} onClick={submit}>Submit application</Button>}
           </div>
         </div>
         <div className="ma-stack">

@@ -91,7 +91,7 @@ describe('product limits', () => {
     expect(maxEquityRelease(100000, 90000)).toBe(0);
   });
   it('tenor is capped by product and by retirement date (BR-02)', () => {
-    expect(maxTenorYears('HOME_PURCHASE', '2060-01-01', NOW)).toBe(30);
+    expect(maxTenorYears('HOME_PURCHASE', '2060-01-01', NOW)).toBe(20);
     expect(maxTenorYears('EQUITY_RELEASE', '2060-01-01', NOW)).toBe(20);
     expect(maxTenorYears('HOME_PURCHASE', '2031-10-12', NOW)).toBe(5);
     expect(maxTenorYears('HOME_PURCHASE', '2025-01-01', NOW)).toBe(0);
@@ -269,7 +269,7 @@ describe('equity payee rules', () => {
   it('pays tuition and medical direct, renovation in stages', () => {
     expect(equityPayeeRule('TUITION').staged).toBe(false);
     expect(equityPayeeRule('MEDICAL').payee).toMatch(/direct/);
-    expect(equityPayeeRule('HOME_RENOVATION').staged).toBe(true);
+    expect(equityPayeeRule('HOME_IMPROVEMENT_RENOVATION').staged).toBe(true);
   });
 });
 

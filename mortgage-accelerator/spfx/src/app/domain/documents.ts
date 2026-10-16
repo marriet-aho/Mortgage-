@@ -1,36 +1,91 @@
 import { DocCategory, DocRef, MortgageCase } from './types';
 
+export type DocStage = 'PRE' | 'POST';
+
+export interface DocCtx {
+  product: MortgageCase['product'];
+  applicant: Pick<MortgageCase['applicant'], 'maritalStatus'>;
+  purchase?: Pick<NonNullable<MortgageCase['purchase']>, 'vendorType'>;
+}
+
 export interface DocSpec {
   docType: string;
+  /** Wording taken from the bank's requirements sheet. */
   label: string;
   category: DocCategory;
   hint: string;
-  required: (c: Pick<MortgageCase, 'product' | 'applicant'>) => boolean;
+  stage: DocStage;
+  /** Shown as its own upload section on the application. */
+  required: (c: DocCtx) => boolean;
+  /** Visible to the applicant at all (optional rows still get an upload section). */
+  applies: (c: DocCtx) => boolean;
 }
 
-/** Document checklist for both products. Stored in a SharePoint library, one folder per case. */
+const HP = (c: DocCtx): boolean => c.product === 'HOME_PURCHASE';
+const ER = (c: DocCtx): boolean => c.product === 'EQUITY_RELEASE';
+const PRIVATE = (c: DocCtx): boolean => HP(c) && !!c.purchase && c.purchase.vendorType === 'PRIVATE';
+const MARRIED = (c: DocCtx): boolean => c.applicant.maritalStatus === 'MARRIED';
+const always = (): boolean => true;
+const never = (): boolean => false;
+
+function pre(docType: string, label: string, category: DocCategory, hint: string, required: (c: DocCtx) => boolean, applies?: (c: DocCtx) => boolean): DocSpec {
+  return { docType, label, category, hint, stage: 'PRE', required, applies: applies || always };
+}
+function post(docType: string, label: string, category: DocCategory, hint: string, required: (c: DocCtx) => boolean, applies?: (c: DocCtx) => boolean): DocSpec {
+  return { docType, label, category, hint, stage: 'POST', required: never, applies: applies || required };
+}
+
+/**
+ * Pre-approval and post-approval requirements, from the bank's
+ * "REQUIREMENTS FOR STAFF HOME PURCHASE MORTGAGE PROGRAM" and
+ * "REQUIREMENTS FOR STAFF EQUITY RELEASE MORTGAGE PROGRAM" (2026).
+ * Stored in the SharePoint library, one folder per case.
+ */
 export const DOC_SPECS: DocSpec[] = [
-  { docType: 'NATIONAL_ID', label: 'National ID (Ghana Card)', category: 'IDENTITY', hint: 'Front and back', required: () => true },
-  { docType: 'EMPLOYMENT_LETTER', label: 'Employment letter', category: 'INCOME', hint: 'Confirms position and employment type', required: () => true },
-  { docType: 'PAYSLIPS', label: 'Payslips', category: 'INCOME', hint: 'Last three months', required: () => true },
-  { docType: 'BANK_STATEMENTS', label: 'Bank statements', category: 'INCOME', hint: 'Last six months', required: () => true },
-  { docType: 'EMPLOYER_CERT', label: 'Employer’s certification of income', category: 'INCOME', hint: 'Stamped by the employer', required: () => true },
-  { docType: 'PASSPORT_PHOTOS', label: 'Passport pictures', category: 'IDENTITY', hint: 'Recent, one per borrower', required: () => true },
-  { docType: 'OFFER_LETTER', label: 'Property offer letter', category: 'PROPERTY', hint: 'From the vendor or developer', required: (c) => c.product === 'HOME_PURCHASE' },
-  { docType: 'SALE_AGREEMENT', label: 'Sale agreement', category: 'PROPERTY', hint: 'Signed or draft', required: (c) => c.product === 'HOME_PURCHASE' },
-  { docType: 'PROPERTY_DOCS', label: 'Property documentation', category: 'PROPERTY', hint: 'Site plan, title or lease, building permit', required: () => true },
-  { docType: 'REQUEST_LETTER', label: 'Equity release request letter', category: 'APPLICATION', hint: 'Reason and intended use of funds', required: (c) => c.product === 'EQUITY_RELEASE' },
-  { docType: 'PURPOSE_EVIDENCE', label: 'Evidence for the purpose', category: 'APPLICATION', hint: 'Quote, invoice, admission letter or statement of need', required: (c) => c.product === 'EQUITY_RELEASE' },
-  { docType: 'INSURANCE', label: 'Insurance', category: 'INSURANCE', hint: 'Needed before disbursement', required: () => false },
-  { docType: 'OTHER', label: 'Additional supporting documents', category: 'APPLICATION', hint: 'Optional', required: () => false }
+  /* ---- pre-approval, both products ---- */
+  pre('APPLICATION_FORM', 'A completed Mortgage Application form', 'APPLICATION', 'Signed electronically at the end of the application form: filed automatically', always),
+  pre('CONSENT_FORM', 'A completed Customer Consent Form', 'CONSENT', 'Consent for credit bureau search: signed electronically and filed automatically', always),
+  pre('REQUEST_LETTER', 'Request Letter for Equity Release Mortgage Facility', 'APPLICATION', 'Addressed to the bank, stating the purpose', ER),
+  pre('OFFER_LETTER', 'A copy of the Offer letter / sales and purchases agreement', 'PROPERTY', 'From the vendor or developer', HP),
+  pre('DOWN_PAYMENT_RECEIPT', 'Receipt of the down payment made to the vendor if available', 'PROPERTY', 'If you have already paid', never, HP),
+  pre('VALUATION_REPORT', 'Valuation report (from FBGL recommended valuer)', 'COLLATERAL', 'Ordered through the Collateral Maintenance Unit: upload when received', always),
+  pre('TITLE_DOCS', 'Title documents to the property / Land Title Certificate', 'PROPERTY', 'Also sent to the Mortgage Unit for the search report', always),
+  pre('PASSPORT_PHOTO', 'Passport size picture', 'IDENTITY', '1 picture', always),
+  pre('GHANA_CARD', 'A copy of Ghana Card (front and back)', 'IDENTITY', 'Must be verified at a branch before submission', always),
+  pre('SPOUSE_GHANA_CARD', 'Ghana card (front and back) from spouse', 'IDENTITY', 'If married. Must be verified', MARRIED),
+  pre('MARRIAGE_CERT', 'A copy of marriage Certificate', 'IDENTITY', 'Where applicable', MARRIED),
+  pre('BUILDING_PERMIT', 'Submission of building/developmental permit', 'PROPERTY', 'Building or development permit (where applicable for Equity Release)', HP, always),
+  pre('BILLS_OF_QUANTITIES', 'Submit Bills of Quantities', 'PROPERTY', 'Where applicable, for home improvement/renovation', never, ER),
+  /* ---- pre-approval, private vendor ---- */
+  pre('VENDOR_ID', 'ID of Vendor (preferably Ghana card, front and back)', 'IDENTITY', 'Must be verified', PRIVATE, PRIVATE),
+  pre('VENDOR_DUE_DILIGENCE', 'Private vendor due diligence report', 'LEGAL', 'Place of residence, directional map, office location etc. You are solely responsible for the due diligence on the vendor', PRIVATE, PRIVATE),
+  pre('VENDOR_COMPANY_DOCS', 'Certificate of incorporation, commencement of business and profile of management and directors of the Vendor’s company', 'LEGAL', 'Where applicable', never, PRIVATE),
+  /* ---- post-approval ---- */
+  post('SPOUSE_LEGAL_ADVICE', 'Independent legal advice from spouse and statutory declaration and consent', 'LEGAL', 'Where applicable. Use the sample document advised by Legal', MARRIED),
+  post('DOWN_PAYMENT_PROOF', 'Proof of minimum down payment of purchase price of property', 'PROPERTY', 'Payment receipt and bank statement', HP),
+  post('DEED_OF_INDENTURE', 'Four (4) Executed Deed of Indenture with site plans (between vendor and staff)', 'LEGAL', 'Add two extra site plans. Borrower and vendor sign behind all copies of the site plans', HP),
+  post('ORIGINAL_TITLE', 'Title documents to the property / Land Title Certificate (original copies)', 'LEGAL', 'Original copies', ER),
+  post('SUB_LEASE', 'Original Sub-Lease and duplicate copies (with two extra site plans) and all related documents required to perfect the mortgage title', 'LEGAL', 'As required by Fidelity Bank', ER),
+  post('LIFE_POLICY', 'Life Insurance Policy with Fidelity Bank as first loss payee', 'INSURANCE', 'Approved vendors: Prudential Life / Enterprise Life (Equity Release); approved list of vendors (Home Purchase)', always),
+  post('FIRE_POLICY', 'Fire and Hazard Policy with Fidelity Bank as first loss payee', 'INSURANCE', 'Enterprise / Hollard', always),
+  post('LEGAL_FEES_RECEIPT', 'Payment of Mortgage registration fees', 'REGISTRATION', 'Legal fees are advised by the Securities Unit based on documents submitted', always)
 ];
 
-export function requiredSpecs(c: Pick<MortgageCase, 'product' | 'applicant'>): DocSpec[] {
-  return DOC_SPECS.filter(function (s) { return s.required(c); });
+export function requiredSpecs(c: DocCtx): DocSpec[] {
+  return DOC_SPECS.filter(function (s) { return s.stage === 'PRE' && s.required(c); });
+}
+
+/** Everything the applicant is shown as an upload section before approval. */
+export function preApprovalSpecs(c: DocCtx): DocSpec[] {
+  return DOC_SPECS.filter(function (s) { return s.stage === 'PRE' && s.applies(c); });
+}
+
+export function postApprovalSpecs(c: DocCtx): DocSpec[] {
+  return DOC_SPECS.filter(function (s) { return s.stage === 'POST' && s.applies(c); });
 }
 
 export function documentCompleteness(
-  c: Pick<MortgageCase, 'product' | 'applicant'>,
+  c: DocCtx,
   docs: DocRef[]
 ): { pct: number; missing: DocSpec[] } {
   const req = requiredSpecs(c);

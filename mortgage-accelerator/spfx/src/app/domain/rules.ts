@@ -27,13 +27,18 @@ export const POLICY = {
   maxFsvPct: 70,
   maxDsrPct: 50,
   comfortableDsrPct: 40,
-  maxTenorYears: { HOME_PURCHASE: 30, EQUITY_RELEASE: 20 } as Record<ProductCode, number>,
+  maxTenorYears: { HOME_PURCHASE: 20, EQUITY_RELEASE: 20 } as Record<ProductCode, number>,
   minAge: 18,
   preApprovalValidityDays: { HOME_PURCHASE: 90, EQUITY_RELEASE: 60 } as Record<ProductCode, number>,
   offerValidityDays: 30,
   /** Years of service below which employment stability is flagged. */
   minServiceYears: 2,
-  defaultRatePct: 18,
+  /** Staff mortgage programme: 6% fixed (requirements sheets, 2026). */
+  defaultRatePct: 6,
+  searchFee: 4000,
+  valuationFeeMin: 3500,
+  valuationFeeMax: 10000,
+  registrationFeePct: 1.85,
   tiers: [
     { tier: 'T1', max: 500000 },
     { tier: 'T2', max: 1500000 },
@@ -633,8 +638,7 @@ export function equityPayeeRule(purpose: EquityDetails['purpose']): { payee: str
       return { payee: 'Institution (direct payment)', staged: false };
     case 'MEDICAL':
       return { payee: 'Hospital or provider (direct payment)', staged: false };
-    case 'HOME_RENOVATION':
-    case 'HOME_IMPROVEMENT':
+    case 'HOME_IMPROVEMENT_RENOVATION':
       return { payee: 'Contractor (stage payments)', staged: true };
     default:
       return { payee: 'Applicant account', staged: false };
@@ -699,4 +703,22 @@ export function computeEligibility(i: EligibilityInput, policy: EligibilityPolic
     exceptionalApprovalAllowed: rule === 'EXCEEDS_DIR_LIMIT' || rule === 'EXCEEDS_QUALIFIED_AMOUNT',
     computedAt: now.toISOString()
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Fees expected (requirements sheets)                                  */
+/* ------------------------------------------------------------------ */
+
+export interface FeeLine { label: string; min: number; max: number; note?: string }
+
+/** The five fees printed on both requirements sheets. Insurance premiums are quoted by the insurer. */
+export function estimateFees(product: ProductCode, propertyValue: number): FeeLine[] {
+  const reg = round2((POLICY.registrationFeePct / 100) * Math.max(0, propertyValue));
+  return [
+    { label: 'Estimated Search Fees', min: POLICY.searchFee, max: POLICY.searchFee, note: product === 'EQUITY_RELEASE' ? 'Where applicable' : undefined },
+    { label: 'Estimated Valuation Report fees', min: POLICY.valuationFeeMin, max: POLICY.valuationFeeMax, note: 'Ranges from Ghs 3,500 to 10,000' },
+    { label: 'Estimated Mortgage Registration fee', min: reg, max: reg, note: POLICY.registrationFeePct + '% x Property value' },
+    { label: 'Mortgage Life Insurance Policy', min: 0, max: 0, note: 'Premium quoted by the insurer' },
+    { label: 'Mortgage Home Protection policy', min: 0, max: 0, note: 'Premium quoted by the insurer' }
+  ];
 }

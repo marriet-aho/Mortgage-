@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useAction, useApp, useAsync } from '../context';
-import { DOC_SPECS, docLabel, requiredSpecs } from '../domain/documents';
+import { DOC_SPECS, docLabel, postApprovalSpecs, preApprovalSpecs, requiredSpecs } from '../domain/documents';
 import { activeApprovalGroup, disbursementBlockers, LEVEL_LABEL, remainingToDisburse } from '../domain/rules';
 import {
   ApprovalStep,
@@ -15,7 +15,7 @@ import {
 } from '../domain/types';
 import { fmtDate, fmtDateTime, money, relTime, title } from '../format';
 import { validateFile } from '../services/fileStore';
-import { Button, Chip, ErrorNote, Loading, Note, NumberField, Panel, ScoreRing, SelectField, SlaChip, Table, TextArea, TextField } from './ui';
+import { Button, Chip, ErrorNote, Loading, Note, NumberField, Panel, ScoreRing, Section, SelectField, SlaChip, Table, TextArea, TextField } from './ui';
 
 export function hasRole(roles: Role[], ...wanted: Role[]): boolean {
   return roles.some(function (r) { return wanted.indexOf(r) >= 0 || r === 'ADMIN'; });
@@ -104,7 +104,8 @@ export function DocumentsPanel(p: { c: MortgageCase; canUpload: boolean; canRequ
   if (docs.error) { return <ErrorNote message={docs.error} />; }
   const list = docs.data || [];
   const required = requiredSpecs(p.c);
-  const optional = DOC_SPECS.filter(function (s) { return required.indexOf(s) < 0; });
+  const optional = preApprovalSpecs(p.c).filter(function (s) { return required.indexOf(s) < 0; });
+  const later = postApprovalSpecs(p.c);
 
   const upload = function (docType: string, category: (typeof DOC_SPECS)[0]['category'], files: FileList | null): void {
     if (!files || !files.length) { return; }
@@ -153,8 +154,23 @@ export function DocumentsPanel(p: { c: MortgageCase; canUpload: boolean; canRequ
   return (
     <div className="ma-stack">
       {p.canUpload && app.files.demo ? <Note><b>Demo.</b> Some preview windows block the file picker. Use <b>Attach sample</b> on any row, or <Button small onClick={attachAllSamples}>Attach samples for all required documents</Button> to move on.</Note> : null}
-      <div className="ma-tw"><table className="ma-t"><thead><tr><th>Document</th><th>Status</th><th>File</th><th /></tr></thead>
-        <tbody>{required.map(row)}{optional.map(row)}</tbody></table></div>
+      <Section title={'Pre-approval documents (' + required.length + ' required)'}>
+        <div className="small muted" style={{ marginBottom: 8 }}>Each row below is its own upload. Attach them to the loan request in Advance Flow as well.</div>
+        <div className="ma-tw"><table className="ma-t"><thead><tr><th>Document</th><th>Status</th><th>File</th><th /></tr></thead>
+          <tbody>{required.map(row)}</tbody></table></div>
+      </Section>
+      {optional.length ? (
+        <Section title="Where applicable">
+          <div className="ma-tw"><table className="ma-t"><thead><tr><th>Document</th><th>Status</th><th>File</th><th /></tr></thead>
+            <tbody>{optional.map(row)}</tbody></table></div>
+        </Section>
+      ) : null}
+      {later.length && p.c.state !== 'DRAFT' ? (
+        <Section title="Post-approval requirements">
+          <div className="ma-tw"><table className="ma-t"><thead><tr><th>Document</th><th>Status</th><th>File</th><th /></tr></thead>
+            <tbody>{later.map(row)}</tbody></table></div>
+        </Section>
+      ) : null}
       <div className="small muted">Files are stored once in the case folder of the SharePoint document library. Every unit reads the same copy.</div>
       {p.canRequest ? (
         <Panel title="Request a document from the applicant">

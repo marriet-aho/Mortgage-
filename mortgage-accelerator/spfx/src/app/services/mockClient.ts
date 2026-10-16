@@ -258,7 +258,7 @@ export class MockAdvanceFlowClient implements AdvanceFlowClient, DevControls {
       applicant: { employeeNo: pe.employeeNo, staffId: pe.staffId, fullName: pe.name, department: pe.department, branch: 'Head Office', position: pe.position, employmentStatus: 'PERMANENT', dateEmployed: pe.employed, dateOfBirth: pe.dob, retirementDate: pe.retire, nationalId: '', phone: '', email: pe.email, address: '', maritalStatus: 'SINGLE' },
       financials: { basicSalary: 0, allowances: 0, otherIncome: 0, deductions: 0, existingLoanRepayments: 0, otherCommitments: 0, assetsTotal: 0, liabilitiesTotal: 0 },
       purchase: product === 'HOME_PURCHASE' ? { purchasePrice: 0, propertyValue: 0, downPayment: 0, vendorType: 'DEVELOPER', vendorName: '', constructionStatus: 'COMPLETED' } : undefined,
-      equity: product === 'EQUITY_RELEASE' ? { declaredValue: 0, existingMortgageBalance: 0, existingMortgageStatus: 'NONE', ownership: 'SOLE', purpose: 'HOME_RENOVATION', useOfFunds: [] } : undefined,
+      equity: product === 'EQUITY_RELEASE' ? { declaredValue: 0, existingMortgageBalance: 0, existingMortgageStatus: 'NONE', ownership: 'SOLE', purpose: 'HOME_IMPROVEMENT_RENOVATION', useOfFunds: [] } : undefined,
       consent: { creditBureau: false, identity: false, dataProcessing: false, regulatory: false, informationSharing: false },
       ownerName: 'Unassigned', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), stageEnteredAt: new Date().toISOString(),
       approvals: [], conditions: [], tasks: [], disbursements: [], postItems: [], locked: false
@@ -290,6 +290,20 @@ export class MockAdvanceFlowClient implements AdvanceFlowClient, DevControls {
     if (patch.ratePct !== undefined) { c.ratePct = patch.ratePct; }
     if (patch.currency) { c.currency = patch.currency; }
     if (patch.coBorrowerName !== undefined) { c.coBorrowerName = patch.coBorrowerName; }
+    if (patch.form) { c.form = { ...(c.form || {}), ...patch.form }; }
+    if (patch.valuationFields) {
+      const vr = c.valuationRequest || { fields: {} };
+      c.valuationRequest = { ...vr, fields: { ...vr.fields, ...patch.valuationFields } };
+    }
+    if (patch.sendValuationRequest) {
+      const vr = c.valuationRequest || { fields: {} };
+      c.valuationRequest = { ...vr, sentAt: new Date().toISOString() };
+      this.audit(c, 'Valuation form sent', 'To the Collateral Maintenance Unit');
+    }
+    if (patch.sendSearchRequest) {
+      c.searchRequest = { sentAt: new Date().toISOString() };
+      this.audit(c, 'Search request sent', 'To the Mortgage Unit with the Land Title Certificate and site plan');
+    }
     c.updatedAt = new Date().toISOString();
     this.refreshReadiness(c);
     return clone(c);
