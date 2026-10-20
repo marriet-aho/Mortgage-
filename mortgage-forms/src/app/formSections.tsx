@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {
-  ASSET_ROWS, CONSENT_ADDRESS, CONSENT_CLAUSES, CONSENT_HEADING, DECLARATION, FieldDef, FormValues, INSURANCE_ROWS,
-  LIABILITY_ROWS, PENSION_CHECKLIST, REFERENCE_COLUMNS, REFERENCE_ROWS, SectionDef, VALUATION_FORM, sectionById, str, visibleFields
+  ASSET_MAX, CONSENT_ADDRESS, CONSENT_CLAUSES, CONSENT_HEADING, DECLARATION, FieldDef, FormValues,
+  PENSION_CHECKLIST, REFERENCE_COLUMNS, REFERENCE_ROWS, SectionDef, VALUATION_FORM, sectionById, str, visibleFields
 } from './formDef';
 import { ProductCode } from './formDef';
 import { SignaturePad } from './signature';
@@ -21,7 +21,7 @@ export function one(d: FieldDef, key: string, f: FormValues, set: Set, errs: Err
   if (d.kind === 'textarea') { return <TextArea key={key} id={id} label={label} required={d.req} wide={d.wide !== false} value={v} error={e} hint={d.hint} onChange={on} />; }
   if (d.kind === 'check') { return <CheckField key={key} id={id} label={label} checked={f[key] === true} onChange={function (x) { set({ [key]: x }); }} />; }
   if (d.kind === 'number') { return <NumberField key={key} id={id} label={label} required={d.req} value={Number(v.replace(/,/g, '')) || 0} error={e} hint={d.hint} onChange={function (x) { on(String(x)); }} />; }
-  return <TextField key={key} id={id} label={label} required={d.req} type={d.kind === 'date' ? 'date' : d.kind === 'tel' ? 'tel' : d.kind === 'email' ? 'email' : 'text'} value={v} error={e} hint={d.hint} wide={d.wide} onChange={on} />;
+  return <TextField key={key} id={id} label={label} readOnly={d.readOnly} required={d.req} type={d.kind === 'date' ? 'date' : d.kind === 'tel' ? 'tel' : d.kind === 'email' ? 'email' : 'text'} value={v} error={e} hint={d.hint} wide={d.wide} onChange={on} />;
 }
 
 /** One section of the Mortgage Application Form, with the printed labels. Pair rows get Borrower and Co-Borrower columns. */
@@ -33,7 +33,7 @@ export function FormSection(p: { id: string; product: ProductCode; f: FormValues
   return (
     <Section title={sec.title}>
       {sec.note ? <div className="small muted" style={{ marginBottom: 8 }}>{sec.note}</div> : null}
-      {p.id === 'personal' ? (
+      {p.id === 'personal' && p.product === 'EQUITY_RELEASE' ? (
         <div style={{ marginBottom: 10 }}><CheckField id="f-has-co" label="There is a Co-Borrower" checked={hasCo} onChange={function (x) { p.set({ has_co: x }); }} /></div>
       ) : null}
       <div className="mf-fgrid">
@@ -50,7 +50,6 @@ export function FormSection(p: { id: string; product: ProductCode; f: FormValues
         })}
       </div>
       {p.id === 'references' ? <References f={p.f} set={p.set} errs={p.errs} name={p.f.b_first_name ? (str(p.f, 'b_first_name') + ' ' + str(p.f, 'b_last_name')).trim() : 'Borrower'} /> : null}
-      {p.id === 'insurance' ? <InsuranceRows f={p.f} set={p.set} /> : null}
       {p.id === 'type' && p.product === 'EQUITY_RELEASE' && p.f.pension_backed === 'yes' ? (
         <Note><b>Pension-backed.</b><ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>{PENSION_CHECKLIST.map(function (t) { return <li key={t}>{t}</li>; })}</ul></Note>
       ) : null}
@@ -79,51 +78,25 @@ function References(p: { f: FormValues; set: Set; errs: Errs; name: string }): J
   );
 }
 
-function InsuranceRows(p: { f: FormValues; set: Set }): JSX.Element {
+/** ASSETS, as in the Equity Release sample: type of asset and value, one row to start, more on request. */
+export function AssetsSection(p: { f: FormValues; set: Set; errs: Errs }): JSX.Element {
+  const count = Math.min(ASSET_MAX, Math.max(1, Number(str(p.f, 'asset_count')) || 1));
   const rows: number[] = [];
-  for (let i = 0; i < INSURANCE_ROWS; i++) { rows.push(i); }
-  const cols: Array<[string, string]> = [['company', 'Life Insurance Company'], ['type', 'Type'], ['policy', 'Policy Number'], ['sum', 'Sum Assured'], ['maturity', 'Maturity Date']];
+  for (let i = 0; i < count; i++) { rows.push(i); }
   return (
-    <div className="mf-stack" style={{ marginTop: 8 }}>
-      {rows.map(function (i) {
-        return (
-          <div key={i} className="mf-fgrid">
-            {cols.map(function (c) {
-              const key = 'ins' + i + '_' + c[0];
-              return <TextField key={key} id={'f-' + key} label={c[1] + ' ' + (i + 1)} type={c[0] === 'maturity' ? 'date' : 'text'} value={str(p.f, key)} onChange={function (v) { p.set({ [key]: v }); }} />;
-            })}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/** Assets and liabilities tables, as on the paper form. */
-export function AssetsSection(p: { f: FormValues; set: Set }): JSX.Element {
-  const block = function (prefix: string, count: number, head: string, d1: string, d2: string): JSX.Element {
-    const rows: number[] = [];
-    for (let i = 0; i < count; i++) { rows.push(i); }
-    return (
-      <Section title={head}>
-        <div className="mf-stack">
-          {rows.map(function (i) {
-            return (
-              <div key={i} className="mf-fgrid">
-                <TextField id={'f-' + prefix + i + '_d'} label={d1 + ' ' + (i + 1)} value={str(p.f, prefix + i + '_d')} onChange={function (v) { p.set({ [prefix + i + '_d']: v }); }} />
-                <NumberField id={'f-' + prefix + i + '_v'} label={d2 + ' ' + (i + 1)} value={Number(str(p.f, prefix + i + '_v')) || 0} onChange={function (v) { p.set({ [prefix + i + '_v']: String(v) }); }} />
-              </div>
-            );
-          })}
-        </div>
-      </Section>
-    );
-  };
-  return (
-    <>
-      {block('asset', ASSET_ROWS, 'ASSETS', 'Type of Asset', 'Value (in Cedis)')}
-      {block('liab', LIABILITY_ROWS, 'LIABILITITES', 'Type of Liability', 'Value (in Cedis)')}
-    </>
+    <Section title="ASSETS">
+      <div className="mf-stack">
+        {rows.map(function (i) {
+          return (
+            <div key={i} className="mf-fgrid">
+              <TextField id={'f-asset' + i + '_d'} label={'Type of Asset' + (count > 1 ? ' ' + (i + 1) : '')} required={i === 0} error={p.errs['asset' + i + '_d']} value={str(p.f, 'asset' + i + '_d')} onChange={function (v) { p.set({ ['asset' + i + '_d']: v }); }} />
+              <NumberField id={'f-asset' + i + '_v'} label={'Value (in Cedis)' + (count > 1 ? ' ' + (i + 1) : '')} required={i === 0} error={p.errs['asset' + i + '_v']} value={Number(str(p.f, 'asset' + i + '_v')) || 0} onChange={function (v) { p.set({ ['asset' + i + '_v']: String(v) }); }} />
+            </div>
+          );
+        })}
+        {count < ASSET_MAX ? <div><button type="button" className="mf-btn sm" onClick={function () { p.set({ asset_count: String(count + 1) }); }}>Add another asset</button></div> : null}
+      </div>
+    </Section>
   );
 }
 

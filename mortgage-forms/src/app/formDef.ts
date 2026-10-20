@@ -3,9 +3,7 @@
  *   - FB Mortgage Loan Application Form (and the completed samples for Home Purchase and Equity Release)
  *   - Customer Asset Valuation Form
  *   - Customer Consent Letter
- * Where a field was added by the module (not on the paper form) it is marked `module: true`
- * so the bank can see exactly what was added. Sections the staff samples cross out, because
- * Advance Flow already holds the data, are shown read-only from Advance Flow instead.
+ * The application form keeps only what the bank's completed samples filled in (see SECTIONS).
  */
 export type ProductCode = 'HOME_PURCHASE' | 'EQUITY_RELEASE';
 export const PRODUCT_LABEL: { [k in ProductCode]: string } = { HOME_PURCHASE: 'Home Purchase', EQUITY_RELEASE: 'Home Equity Release' };
@@ -26,8 +24,8 @@ export interface FieldDef {
   req?: boolean;
   wide?: boolean;
   hint?: string;
-  /** Added by the module, not printed on the paper form. */
-  module?: boolean;
+  /** Shown but not editable. */
+  readOnly?: boolean;
   products?: ProductCode[];
   show?: (f: FormValues) => boolean;
 }
@@ -53,39 +51,46 @@ const YN: Array<[string, string]> = [['yes', 'Yes'], ['no', 'No']];
 /* Mortgage Application Form                                              */
 /* ---------------------------------------------------------------------- */
 
+const HP: ProductCode[] = ['HOME_PURCHASE'];
+const ER: ProductCode[] = ['EQUITY_RELEASE'];
+
+/**
+ * Only what the bank's completed samples actually filled in. The Home Purchase sample is the older form
+ * version (no co-borrower, financial information crossed out); the Equity Release sample is the newer version
+ * (pension question, residential status, co-borrower, financial information, assets, previous employment).
+ * Anything left blank or struck through in the sample is not asked.
+ */
 export const SECTIONS: SectionDef[] = [
   {
     id: 'type',
     title: 'TYPE OF MORTGAGE REQUESTED',
-    note: '(PLEASE CHECK) The type is fixed by the product you chose. 1. Home Purchase, 2. Home Equity, 3. Home Completion, 4. Home Improvement.',
+    note: '(PLEASE CHECK)',
     fields: [
+      { key: 'pension_backed', label: 'Pension-Backed Mortgage?', kind: 'radio', options: YN, products: ER, req: true, hint: 'If Yes, the pension checklist below applies.' },
+      { key: 'mortgage_type', label: 'Type of mortgage', readOnly: true },
       { key: 'currency', label: 'CURRENCY', kind: 'radio', req: true, options: [['CEDI', 'CEDI'], ['DOLLAR', 'DOLLAR'], ['EURO', 'EURO'], ['OTHER', 'OTHER']] },
-      { key: 'currency_other', label: 'OTHER', show: function (f) { return f.currency === 'OTHER'; } },
-      { key: 'pension_backed', label: 'Pension-Backed Mortgage?', kind: 'radio', options: YN, products: ['EQUITY_RELEASE'], req: true, hint: 'Shown on the Equity Release sample form. If Yes, the pension checklist below applies.' }
+      { key: 'currency_other', label: 'OTHER', show: function (f) { return f.currency === 'OTHER'; } }
     ]
   },
   {
     id: 'personal',
     title: 'PERSONAL INFORMATION',
     fields: [
-      { key: 'residential_status', label: 'Residential Status', kind: 'radio', options: [['tenant', 'Tenant'], ['owner', 'Owner']], products: ['EQUITY_RELEASE'] },
-      { key: 'rent_mortgage_amount', label: 'Rent/Mortgage Amount', kind: 'number', products: ['EQUITY_RELEASE'] },
+      { key: 'residential_status', label: 'Residential Status', kind: 'radio', options: [['Tenant', 'Tenant'], ['Owner', 'Owner']], products: ER, req: true },
       { key: 'last_name', label: 'Last Name:', pair: true, req: true },
       { key: 'first_name', label: 'First Name:', pair: true, req: true },
-      { key: 'middle_name', label: 'Middle Name:', pair: true },
       { key: 'address', label: 'Current Residential Address:', kind: 'textarea', pair: true, req: true },
       { key: 'national_id', label: 'National ID #', pair: true, req: true, hint: 'Ghana Card, format GHA-000000000-0' },
       { key: 'cell', label: 'Cell Phone No:', kind: 'tel', pair: true, req: true },
       { key: 'email', label: 'E-Mail:', kind: 'email', pair: true, req: true },
-      { key: 'tel_res', label: 'Tel. No. (Res.):', kind: 'tel', pair: true },
+      { key: 'tel_res', label: 'Tel. No. (Res.):', kind: 'tel', pair: true, products: ER, req: true },
       { key: 'property_use', label: 'Property will be/ is', pair: true, req: true, hint: 'For example: Primary residence' },
-      { key: 'previous_address', label: 'If current address is less than 1 year, provide previous address', kind: 'textarea', wide: true },
       { key: 'dob', label: 'Date of Birth', kind: 'date', pair: true, req: true },
       { key: 'sex', label: 'Sex', kind: 'radio', options: [['M', 'M'], ['F', 'F']], pair: true, req: true },
-      { key: 'prefix', label: 'Prefix (PLEASE CHECK)', kind: 'radio', options: [['Mr', 'Mr'], ['Mrs', 'Mrs'], ['Ms', 'Ms'], ['Other', 'Other']], pair: true, req: true },
-      { key: 'dependants', label: 'No. of Dependants', kind: 'number' },
-      { key: 'dependant_ages', label: 'Ages', hint: 'For example: 5, 2' },
-      { key: 'relationship', label: 'Relationship btn. Borrowers:', kind: 'radio', options: [['Spouse', 'Spouse'], ['Sibling', 'Sibling'], ['Parent/Child', 'Parent/Child'], ['Other', 'Other (please specify)']], show: function (f) { return f.has_co === true; } },
+      { key: 'prefix', label: 'Prefix (PLEASE CHECK)', kind: 'radio', options: [['Mr', 'Mr'], ['Mrs', 'Mrs'], ['Ms', 'Ms'], ['Other', 'Other']], pair: true, products: ER, req: true },
+      { key: 'dependants', label: 'No. of Dependants', kind: 'number', req: true },
+      { key: 'dependant_ages', label: 'Ages', req: true, hint: 'For example: 5, 2' },
+      { key: 'relationship', label: 'Relationship btn. Borrowers:', kind: 'radio', options: [['Spouse', 'Spouse'], ['Sibling', 'Sibling'], ['Parent/Child', 'Parent/Child'], ['Other', 'Other (please specify)']], products: ER, req: true, show: function (f) { return f.has_co === true; } },
       { key: 'relationship_other', label: 'Other (please specify)', show: function (f) { return f.has_co === true && f.relationship === 'Other'; } }
     ]
   },
@@ -93,11 +98,11 @@ export const SECTIONS: SectionDef[] = [
     id: 'employment',
     title: 'EMPLOYMENT DETAILS',
     fields: [
-      { key: 'ssn', label: 'Social Security No', pair: true },
-      { key: 'occupation', label: 'Occupation', pair: true, req: true },
-      { key: 'length_employment', label: 'Length of Employment', pair: true, req: true },
       { key: 'employer', label: 'Name of Current Employer or business if self employed', pair: true, req: true },
-      { key: 'employer_address', label: 'Address of Employer or business', kind: 'textarea', pair: true }
+      { key: 'employer_address', label: 'Address of Employer or business', kind: 'textarea', pair: true, products: ER, req: true },
+      { key: 'ssn', label: 'Social Security No', pair: true, products: ER, req: true },
+      { key: 'occupation', label: 'Occupation', pair: true, req: true },
+      { key: 'length_employment', label: 'Length of Employment', pair: true, req: true }
     ]
   },
   {
@@ -111,31 +116,14 @@ export const SECTIONS: SectionDef[] = [
     ]
   },
   {
-    id: 'selfemp',
-    title: 'SELF EMPLOYMENT',
-    note: 'Only if self employed. Leave blank for staff.',
-    fields: [
-      { key: 'se_address', label: 'Address if self employed', pair: true },
-      { key: 'se_tel', label: 'Business Telephone No.', kind: 'tel', pair: true },
-      { key: 'se_share', label: 'Shareholding in business', pair: true },
-      { key: 'se_nature', label: 'Nature of business', pair: true },
-      { key: 'se_length', label: 'Length of employment', pair: true },
-      { key: 'se_accountant', label: 'Name and address of accountant If self-employed', pair: true },
-      { key: 'se_accountant_tel', label: 'Telephone Number (Accountant)', kind: 'tel', pair: true },
-      { key: 'se_history', label: 'Please provide employment/business history over last 3 years', kind: 'textarea', wide: true }
-    ]
-  },
-  {
     id: 'previous',
     title: 'PREVIOUS EMPLOYMENT',
-    note: 'Leave blank if you have been with your current employer for three years or more.',
+    products: ER,
     fields: [
-      { key: 'pe_occupation', label: 'Previous Occupation', pair: true },
-      { key: 'pe_employer', label: 'Previous Employer/business name', pair: true },
-      { key: 'pe_tel', label: 'Telephone number', kind: 'tel', pair: true },
-      { key: 'pe_share', label: 'Shareholding in business', pair: true },
-      { key: 'pe_nature', label: 'Nature of business', pair: true },
-      { key: 'pe_length', label: 'Length of previous Employment/business', pair: true }
+      { key: 'pe_occupation', label: 'Previous Occupation', pair: true, req: true },
+      { key: 'pe_employer', label: 'Previous Employer/business name', pair: true, req: true },
+      { key: 'pe_nature', label: 'Nature of business', pair: true, req: true },
+      { key: 'pe_length', label: 'Length of previous Employment/business', pair: true, req: true }
     ]
   },
   {
@@ -144,24 +132,30 @@ export const SECTIONS: SectionDef[] = [
     fields: [
       { key: 'bank_name', label: 'Name and Address of Bank', pair: true, req: true },
       { key: 'bank_branch', label: 'Branch', pair: true, req: true },
-      { key: 'bank_tel', label: 'Telephone Number', kind: 'tel', pair: true },
       { key: 'bank_account', label: 'Account Number', pair: true, req: true },
       { key: 'bank_years', label: 'How long has account been at this bank', pair: true, req: true }
     ]
   },
   {
+    id: 'financial',
+    title: 'FINANCIAL INFORMATION',
+    note: 'Monthly',
+    products: ER,
+    fields: [
+      { key: 'fin_basic', label: 'Basic Wage/Salary', kind: 'number', pair: true, req: true },
+      { key: 'fin_subtotal', label: 'Sub Total', kind: 'number', pair: true, req: true },
+      { key: 'fin_tax', label: 'Deduction: Tax', kind: 'number', pair: true, req: true },
+      { key: 'fin_net', label: 'Net Salary', kind: 'number', pair: true, req: true }
+    ]
+  },
+  {
     id: 'existing',
     title: 'EXISTING MORTGAGES',
+    products: HP,
     fields: [
       { key: 'q_mortgage_before', label: 'Have you ever had or applied for a Mortgage before?', kind: 'radio', options: YN, pair: true, req: true },
       { key: 'q_refused', label: 'Have you ever been refused credit before?', kind: 'radio', options: YN, pair: true, req: true },
-      { key: 'q_equity', label: 'Are you using the available equity towards the new purchase?', kind: 'radio', options: YN, pair: true, req: true, products: ['HOME_PURCHASE'] },
-      { key: 'ex_address', label: 'Address of Property Mortgaged', kind: 'textarea', pair: true },
-      { key: 'ex_lender', label: 'Name and Address of first Lender', pair: true },
-      { key: 'ex_date', label: 'Date of purchase', kind: 'date', pair: true },
-      { key: 'ex_original', label: 'Original for house purchased', kind: 'number', pair: true },
-      { key: 'ex_balance', label: 'Outstanding Balance', kind: 'number', pair: true },
-      { key: 'ex_equity', label: 'Amount of equity existing on property', kind: 'number', pair: true }
+      { key: 'q_equity', label: 'Are you using the available equity towards the new purchase?', kind: 'radio', options: YN, pair: true, req: true }
     ]
   },
   {
@@ -169,34 +163,16 @@ export const SECTIONS: SectionDef[] = [
     title: 'DETAILS OF PROPERTY UNDER THIS APPLICATION',
     fields: [
       { key: 'p_address', label: 'Address', kind: 'textarea', req: true, wide: true },
-      { key: 'purchase_price', label: 'Purchase Price (Cedi/Dollar/Euro)', kind: 'number', req: true, products: ['HOME_PURCHASE'] },
-      { key: 'down_payment', label: 'Down payment - (20% Minimum) (Cedi/Dollar/Euro)', kind: 'number', req: true, products: ['HOME_PURCHASE'] },
+      { key: 'purchase_price', label: 'Purchase Price (Cedi/Dollar/Euro)', kind: 'number', req: true, products: HP },
+      { key: 'down_payment', label: 'Down payment - (20% Minimum) (Cedi/Dollar/Euro)', kind: 'number', req: true, products: HP },
       { key: 'tenure', label: 'Is Property:', kind: 'radio', options: [['Freehold', 'Freehold'], ['Leasehold', 'Leasehold']], req: true },
-      { key: 'age_years', label: 'Age of Property: (Years)', kind: 'number' },
-      { key: 'in_construction', label: 'in the course of construction (new)', kind: 'check' },
+      { key: 'age_years', label: 'Age of Property: (Years)', kind: 'number', req: true },
       { key: 'house_type', label: 'House of Type:', kind: 'radio', options: [['2-BEDROOM', '2-BEDROOM'], ['3-Bedroom', '3-Bedroom'], ['4-Bedroom', '4-Bedroom'], ['Other', 'Other(specify)']], req: true },
       { key: 'house_other', label: 'Other(specify)', show: function (f) { return f.house_type === 'Other'; } },
-      { key: 'developer', label: 'Name and address of developer:', kind: 'textarea', req: true, wide: true, hint: 'For Equity Release the sample form shows the owner here.' },
+      { key: 'developer', label: 'Name and address of developer:', kind: 'textarea', req: true, wide: true, hint: 'For Equity Release, the sample shows the owner of the property here.' },
       { key: 'developer_tel', label: 'Telephone Number:', kind: 'tel', req: true },
       { key: 'unoccupied', label: 'Will the property be left unoccupied for more than 1 month continuously in any one year?', kind: 'radio', options: YN, req: true, wide: true },
-      { key: 'unoccupied_details', label: 'Full details (separate sheet)', kind: 'textarea', wide: true, show: function (f) { return f.unoccupied === 'yes'; }, hint: 'If you replied YES, please give full details.' },
-    ]
-  },
-  {
-    id: 'insurance',
-    title: 'LIFE INSURANCE',
-    note: 'Life Insurance Company, Type, Policy Number, Sum Assured, Maturity Date. Optional now: the policies are required after approval.',
-    fields: []
-  },
-  {
-    id: 'poa',
-    title: 'DETAILS OF HOLDER OF POWER OF ATTORNEY (NRG)',
-    note: 'Only if you are a non-resident.',
-    fields: [
-      { key: 'poa_name', label: 'Name:' },
-      { key: 'poa_address', label: 'Address:' },
-      { key: 'poa_tel_office', label: 'Telephone No. Office:', kind: 'tel' },
-      { key: 'poa_tel_home', label: 'Home:', kind: 'tel' }
+      { key: 'unoccupied_details', label: 'Full details (separate sheet)', kind: 'textarea', wide: true, show: function (f) { return f.unoccupied === 'yes'; }, hint: 'If you replied YES, please give full details.' }
     ]
   }
 ];
@@ -213,9 +189,8 @@ export const REFERENCE_COLUMNS: Array<{ key: string; label: string; kind?: Field
   { key: 'relationship', label: 'RELATIONSHIP', req: true },
   { key: 'phone', label: 'PHONE NUMBERS', kind: 'tel', req: true }
 ];
-export const ASSET_ROWS = 3;
-export const LIABILITY_ROWS = 3;
-export const INSURANCE_ROWS = 2;
+/** Equity Release sample lists assets; more rows can be added up to this many. */
+export const ASSET_MAX = 5;
 
 /* ---------------------------------------------------------------------- */
 /* Customer Asset Valuation Form                                          */
@@ -281,9 +256,9 @@ export const PENSION_CHECKLIST: string[] = [
 
 export const STEPS: StepDef[] = [
   { id: 'personal', title: 'Type and personal information', sections: ['type', 'personal'] },
-  { id: 'employment', title: 'Employment, references and bank', sections: ['employment', 'references', 'selfemp', 'previous', 'bank'] },
-  { id: 'existing', title: 'Existing mortgages and assets', sections: ['existing', 'assets'] },
-  { id: 'property', title: 'Property', sections: ['property', 'insurance', 'poa'] },
+  { id: 'employment', title: 'Employment, references and bank', sections: ['employment', 'references', 'previous', 'bank'] },
+  { id: 'existing', title: 'Financial information, mortgages and assets', sections: ['financial', 'existing', 'assets'] },
+  { id: 'property', title: 'Property', sections: ['property'] },
   { id: 'declaration', title: 'Declaration and signature', sections: ['declaration'] }
 ];
 
@@ -333,7 +308,7 @@ export function validateForm(product: ProductCode, f: FormValues): FormIssue[] {
   STEPS.forEach(function (step) {
     step.sections.forEach(function (sid) {
       const sec = sectionById(sid);
-      if (!sec) { return; }
+      if (!sec || (sec.products && sec.products.indexOf(product) < 0)) { return; }
       visibleFields(sec, product, f).forEach(function (d) {
         if (d.pair && !hasCo) { check(d, 'b_' + d.key, 'Borrower'); }
         if (d.pair && hasCo) { check(d, 'b_' + d.key, 'Borrower'); check(d, 'c_' + d.key, 'Co-Borrower'); }

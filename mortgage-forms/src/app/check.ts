@@ -9,6 +9,10 @@ export function formIssues(id: FormId, product: ProductCode, f: FormValues): Iss
   const need = function (key: string, ok: boolean, message: string, step: string): void { if (!ok) { out.push({ key, message, step }); } };
   if (id === 'application') {
     validateForm(product, f).forEach(function (i) { out.push({ key: i.key, message: i.message, step: i.step }); });
+    if (product === 'EQUITY_RELEASE') {
+      need('asset0_d', !!str(f, 'asset0_d').trim(), 'ASSETS: Type of Asset is required', 'existing');
+      need('asset0_v', !!str(f, 'asset0_v').trim(), 'ASSETS: Value (in Cedis) is required', 'existing');
+    }
     need('sig_references', !!str(f, 'sig_references'), 'Sign the Personal Reference Form', 'employment');
     need('declaration', f.declaration === true, 'You must agree to the declaration', 'declaration');
     need('sig_application_b', !!str(f, 'sig_application_b'), 'Sign the form (Borrower)', 'declaration');

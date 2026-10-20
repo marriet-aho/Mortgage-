@@ -1,5 +1,5 @@
 import {
-  ASSET_ROWS, CONSENT_ADDRESS, CONSENT_CLAUSES, CONSENT_HEADING, DECLARATION, FormValues, INSURANCE_ROWS, LIABILITY_ROWS,
+  ASSET_MAX, CONSENT_ADDRESS, CONSENT_CLAUSES, CONSENT_HEADING, DECLARATION, FormValues,
   PENSION_CHECKLIST, ProductCode, PRODUCT_LABEL, REFERENCE_COLUMNS, REFERENCE_ROWS, REQUEST_LETTER, REQUEST_LETTER_ADDRESS,
   REQUEST_LETTER_HEADING, SECTIONS, SectionDef, VALUATION_FORM, str, visibleFields
 } from './formDef';
@@ -43,7 +43,9 @@ function kv(rows: Array<[string, string]>): string {
 
 function sectionHtml(sec: SectionDef, product: ProductCode, f: FormValues): string {
   const hasCo = f.has_co === true;
-  const fields = visibleFields(sec, product, f);
+  const fields = visibleFields(sec, product, f).filter(function (d) {
+    return d.pair ? (!!f['b_' + d.key] || (hasCo && !!f['c_' + d.key])) : (f[d.key] !== undefined && f[d.key] !== '' && f[d.key] !== false);
+  });
   if (!fields.length) { return ''; }
   let h = '<h3>' + esc(sec.title) + '</h3>';
   let i = 0;
@@ -73,21 +75,11 @@ function referencesHtml(f: FormValues): string {
 }
 
 function assetsHtml(f: FormValues): string {
-  const rows = function (prefix: string, n: number): string {
-    let r = '';
-    for (let i = 0; i < n; i++) { r += '<tr><td>' + value(f[prefix + i + '_d']) + '</td><td>' + value(f[prefix + i + '_v']) + '</td></tr>'; }
-    return r;
-  };
-  return '<h3>ASSETS</h3><table class="grid"><tr><th>Type of Asset</th><th>Value (in Cedis)</th></tr>' + rows('asset', ASSET_ROWS) + '</table>' +
-    '<h3>LIABILITITES</h3><table class="grid"><tr><th>Type of Liability</th><th>Value (in Cedis)</th></tr>' + rows('liab', LIABILITY_ROWS) + '</table>';
-}
-
-function insuranceHtml(f: FormValues): string {
-  let h = '<h3>LIFE INSURANCE</h3><table class="grid"><tr><th>Life Insurance Company</th><th>Type</th><th>Policy Number</th><th>Sum Assured</th><th>Maturity Date</th></tr>';
-  for (let i = 0; i < INSURANCE_ROWS; i++) {
-    h += '<tr>' + ['company', 'type', 'policy', 'sum', 'maturity'].map(function (k) { return '<td>' + value(f['ins' + i + '_' + k], k === 'maturity' ? 'date' : undefined) + '</td>'; }).join('') + '</tr>';
+  let rows = '';
+  for (let i = 0; i < ASSET_MAX; i++) {
+    if (f['asset' + i + '_d'] || f['asset' + i + '_v']) { rows += '<tr><td>' + value(f['asset' + i + '_d']) + '</td><td>' + value(f['asset' + i + '_v']) + '</td></tr>'; }
   }
-  return h + '</table>';
+  return rows ? '<h3>ASSETS</h3><table class="grid"><tr><th>Type of Asset</th><th>Value (in Cedis)</th></tr>' + rows + '</table>' : '';
 }
 
 export function applicationHtml(product: ProductCode, f: FormValues): string {
@@ -95,11 +87,9 @@ export function applicationHtml(product: ProductCode, f: FormValues): string {
   SECTIONS.forEach(function (sec) {
     if (sec.products && sec.products.indexOf(product) < 0) { return; }
     if (sec.id === 'references') { h += referencesHtml(f); return; }
-    if (sec.id === 'insurance') { return; }
     h += sectionHtml(sec, product, f);
-    if (sec.id === 'existing') { h += assetsHtml(f); }
+    if (sec.id === 'financial') { h += assetsHtml(f); }
   });
-  h += insuranceHtml(f);
   if (product === 'EQUITY_RELEASE' && f.pension_backed === 'yes') { h += '<h3>PENSION-BACKED MORTGAGE</h3><ul>' + PENSION_CHECKLIST.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>'; }
   h += '<h3>DECLARATION</h3><ol class="small">' + DECLARATION.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>';
   h += signatureHtml(f.sig_application_b, 'Signed (Borrower)');

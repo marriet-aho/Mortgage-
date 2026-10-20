@@ -15,7 +15,16 @@ Also shown on each product page, word for word: the staff policy, steps to follo
 
 Every question uses the label printed on the paper form. Each form is signed on screen (draw with a mouse, finger or pen, or type your name; name, date and time are saved). Then **Submit and go to Advance Flow**: the signed forms are saved to the SharePoint library and the person is taken to Advance Flow (Create Staff Loan) to finish the loan there. **Print / Save as PDF** is still available on every form.
 
-Left out on purpose: Financial Information (Advance Flow holds salary and deductions) and the Employer's Certification of Income (not on the staff requirements list).
+**The application form keeps only what the bank's completed samples filled in.** Blank and struck-through parts of the samples are not asked.
+
+| | Home Purchase sample | Equity Release sample |
+|---|---|---|
+| Form version | Older (4 mortgage types, no pension question) | Newer (pension-backed question, residential status) |
+| Co-Borrower | None | Yes (optional tick) |
+| Asked | Currency, personal information, employment (employer, occupation, length), 5 references with signature, bank details, existing mortgages (3 questions), property details with purchase price and down payment, declaration | Pension-backed question, residential status, personal information with Tel. No. (Res.) and prefix, relationship, employment with address and Social Security No, 5 references with signatures, previous employment, bank details, financial information (basic salary, sub total, tax, net salary), assets, property details (no price), declaration |
+| Not asked (blank or struck through) | Middle name, Tel. No. (Res.), previous address, prefix, Social Security No, employer address, self employment, previous employment, financial information, assets and liabilities, life insurance, power of attorney, employer certification of income | Middle name, previous address, self employment, liabilities, life insurance, power of attorney, purchase price, down payment |
+
+The printed copy also leaves out any answer that is empty.
 
 ## Where it fits in Advance Flow
 

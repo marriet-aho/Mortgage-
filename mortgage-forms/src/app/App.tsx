@@ -31,10 +31,10 @@ const FORM_NOTE: { [k in FormId]: string } = {
 
 function today(): string { return new Date().toISOString().slice(0, 10); }
 
-function prefill(id: FormId, name: string, email: string): FormValues {
+function prefill(id: FormId, name: string, email: string, product?: ProductCode): FormValues {
   const parts = name.split(' ').filter(Boolean);
   if (id === 'application') {
-    const f: FormValues = { currency: 'CEDI', b_first_name: parts[0] || '', b_last_name: parts.length > 1 ? parts[parts.length - 1] : '', b_middle_name: parts.slice(1, -1).join(' '), b_email: email, b_employer: 'Fidelity Bank Ghana Limited', b_employer_address: 'PMB 43, Cantonments-Accra', ref_borrower_name: name };
+    const f: FormValues = { mortgage_type: product === 'EQUITY_RELEASE' ? '2. Home Equity' : '1. Home Purchase', currency: 'CEDI', b_first_name: parts[0] || '', b_last_name: parts.length > 1 ? parts[parts.length - 1] : '', b_email: email, b_employer: 'Fidelity Bank Ghana Limited', ref_borrower_name: name };
     return f;
   }
   if (id === 'consent') { return { consent_name: name, consent_date: today() }; }
@@ -57,7 +57,7 @@ export function FormsApp(p: FormsAppProps): JSX.Element {
     const ids = availableForms(product);
     Promise.all(ids.map(function (id) { return p.store.load(product + '/' + id); })).then(function (loaded) {
       const next: Pack = {};
-      ids.forEach(function (id, i) { next[id] = loaded[i] || prefill(id, p.userName, p.userEmail); });
+      ids.forEach(function (id, i) { next[id] = loaded[i] || prefill(id, p.userName, p.userEmail, product); });
       setPack(next); setView({ kind: 'pack', product }); setLoading(false);
     }, function (e) { say(String(e)); setLoading(false); });
   };
@@ -233,7 +233,7 @@ function FormPage(p: { product: ProductCode; id: FormId; f: FormValues; set: (pa
     content = (
       <>
         {ids.map(function (id) {
-          if (id === 'assets') { return <AssetsSection key={id} f={p.f} set={p.set} />; }
+          if (id === 'assets') { return p.product === 'EQUITY_RELEASE' ? <AssetsSection key={id} f={p.f} set={p.set} errs={errs} /> : null; }
           if (id === 'declaration') { return <DeclarationSection key={id} f={p.f} set={p.set} errs={errs} name={p.signer} coName={p.f.has_co === true ? (str(p.f, 'c_first_name') + ' ' + str(p.f, 'c_last_name')).trim() || 'Co-Borrower' : undefined} />; }
           return sec(id);
         })}
