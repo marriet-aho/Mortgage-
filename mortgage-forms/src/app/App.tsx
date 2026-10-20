@@ -23,7 +23,7 @@ type View = { kind: 'home' } | { kind: 'pack'; product: ProductCode } | { kind: 
 type Pack = { [form: string]: FormValues };
 
 const FORM_NOTE: { [k in FormId]: string } = {
-  application: 'Every question on the bank’s paper form, including the Personal Reference Form and the Declaration. Sign at the end.',
+  application: 'The bank’s application form, with the Personal Reference Form and the Declaration. Sign at the end.',
   consent: 'Consent for credit bureau search, with four consents and your signature.',
   valuation: 'Goes to the Collateral Maintenance Unit, which assigns a Fidelity-recommended valuer.',
   request: 'The letter that states the amount, the purpose and the property.'
@@ -149,14 +149,14 @@ function Home(p: { onPick: (p: ProductCode) => void; loading: boolean; advanceFl
   return (
     <>
       <Head title="Staff Mortgage Forms" sub="Fidelity Bank staff mortgage programme. Fill in the bank’s forms on screen, sign them electronically, and attach the PDFs in Advance Flow." />
-      <div className="mf-grid2">
+      <div className="mf-grid2" style={{ gridTemplateColumns: 'repeat(2,minmax(0,1fr))', alignItems: 'stretch' }}>
         {(['HOME_PURCHASE', 'EQUITY_RELEASE'] as ProductCode[]).map(function (pr) {
           const r = REQUIREMENTS[pr];
           return (
-            <Panel key={pr} title={PRODUCT_LABEL[pr]}>
+            <Panel key={pr} title={PRODUCT_LABEL[pr]} style={{ display: 'flex', flexDirection: 'column' }}>
               <p style={{ margin: '0 0 8px' }}>{r.terms}</p>
               <div className="small muted" style={{ marginBottom: 10 }}>Forms: {availableForms(pr).map(function (id) { return FORM_TITLE[id]; }).join(', ')}.</div>
-              <Button primary disabled={p.loading} onClick={function () { p.onPick(pr); }}>Start {PRODUCT_LABEL[pr]} forms</Button>
+              <div style={{ marginTop: 'auto' }}><Button primary disabled={p.loading} onClick={function () { p.onPick(pr); }}>Start {PRODUCT_LABEL[pr]} forms</Button></div>
             </Panel>
           );
         })}
@@ -194,6 +194,7 @@ function PackView(p: { product: ProductCode; canSubmit: boolean; onSubmit: () =>
           {r.policy ? <Panel title="Staff policy"><ul style={{ margin: 0, paddingLeft: 18 }}>{r.policy.map(function (t) { return <li key={t}>{t}</li>; })}</ul></Panel> : null}
           <Panel title="Steps to follow"><ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>{r.steps.map(function (t) { return <li key={t}>{t}</li>; })}</ol></Panel>
           <Where advanceFlowUrl={p.advanceFlowUrl} />
+          <Panel title="Post approval requirements"><ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>{r.post.map(function (t) { return <li key={t}>{t}</li>; })}</ol></Panel>
         </div>
         <div className="mf-stack">
           <Panel title="Pre-approval requirements (attach in Advance Flow, Create Staff Loan Step 2)">
@@ -201,7 +202,6 @@ function PackView(p: { product: ProductCode; canSubmit: boolean; onSubmit: () =>
             {r.privateVendor ? <><b className="small" style={{ display: 'block', marginTop: 10 }}>FOR PRIVATE VENDORS: (Kindly add the following items)</b><ol style={{ margin: '4px 0 0', paddingLeft: 18 }}>{r.privateVendor.map(function (t) { return <li key={t}>{t}</li>; })}</ol></> : null}
             {r.note ? <div className="small muted" style={{ marginTop: 8 }}>{r.note}</div> : null}
           </Panel>
-          <Panel title="Post approval requirements"><ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>{r.post.map(function (t) { return <li key={t}>{t}</li>; })}</ol></Panel>
           <Panel title="Fees expected"><ol style={{ margin: 0, paddingLeft: 18 }}>{r.fees.map(function (t) { return <li key={t}>{t}</li>; })}</ol></Panel>
         </div>
       </div>

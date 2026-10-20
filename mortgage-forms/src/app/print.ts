@@ -3,7 +3,12 @@ import {
   PENSION_CHECKLIST, ProductCode, PRODUCT_LABEL, REFERENCE_COLUMNS, REFERENCE_ROWS, REQUEST_LETTER, REQUEST_LETTER_ADDRESS,
   REQUEST_LETTER_HEADING, SECTIONS, SectionDef, VALUATION_FORM, str, visibleFields
 } from './formDef';
+import { FIDELITY_LOGO } from './logo';
 import { SignatureValue, parseSignature } from './signature';
+
+function brand(): string {
+  return '<div class="brand"><img src="' + FIDELITY_LOGO + '" alt="Fidelity Bank" width="44" height="44"><span>FIDELITY BANK</span></div>';
+}
 
 export type FormId = 'application' | 'consent' | 'valuation' | 'request';
 
@@ -83,7 +88,7 @@ function assetsHtml(f: FormValues): string {
 }
 
 export function applicationHtml(product: ProductCode, f: FormValues): string {
-  let h = '<h1>FIDELITY BANK</h1><h2>Mortgage Application Form</h2><p class="small">Form FBM0002B · ' + esc(PRODUCT_LABEL[product]) + '</p>';
+  let h = brand() + '<h2>Mortgage Application Form</h2><p class="small">Form FBM0002B · ' + esc(PRODUCT_LABEL[product]) + '</p>';
   SECTIONS.forEach(function (sec) {
     if (sec.products && sec.products.indexOf(product) < 0) { return; }
     if (sec.id === 'references') { h += referencesHtml(f); return; }
@@ -98,20 +103,20 @@ export function applicationHtml(product: ProductCode, f: FormValues): string {
 }
 
 export function consentHtml(f: FormValues): string {
-  return '<h1>FIDELITY BANK</h1><h2>' + esc(CONSENT_HEADING) + '</h2>' +
+  return brand() + '<h2>' + esc(CONSENT_HEADING) + '</h2>' +
     '<p>' + CONSENT_ADDRESS.map(esc).join('<br>') + '</p><p>Dear Sir/Madam,</p>' +
     '<ol type="a">' + CONSENT_CLAUSES.map(function (c) { return '<li>' + (f[c.key] === true ? '&#9746; ' : '&#9744; ') + esc(c.text) + '</li>'; }).join('') + '</ol>' +
     kv([['Name', value(f.consent_name)], ['Date', value(f.consent_date, 'date')]]) + signatureHtml(f.sig_consent, 'Signature');
 }
 
 export function valuationHtml(f: FormValues): string {
-  return '<h1>FIDELITY BANK</h1><h2>' + esc(VALUATION_FORM.title) + '</h2><p class="small">' + esc(VALUATION_FORM.note || '') + '</p>' +
+  return brand() + '<h2>' + esc(VALUATION_FORM.title) + '</h2><p class="small">' + esc(VALUATION_FORM.note || '') + '</p>' +
     kv(VALUATION_FORM.fields.map(function (d) { return [d.label, value(f[d.key], d.kind)] as [string, string]; })) + signatureHtml(f.sig_valuation, 'Authorized Signature');
 }
 
 export function requestHtml(f: FormValues): string {
   const checks = REQUEST_LETTER.fields.filter(function (d) { return d.kind === 'check'; });
-  return '<h1>' + esc(str(f, 'rl_name') || '') + '</h1><p>' + value(f.rl_date, 'date') + '</p><p>' + REQUEST_LETTER_ADDRESS.map(esc).join('<br>') + '</p><p>Dear Sir/Madam,</p>' +
+  return brand() + '<p>' + value(f.rl_date, 'date') + '</p><p>' + REQUEST_LETTER_ADDRESS.map(esc).join('<br>') + '</p><p>Dear Sir/Madam,</p>' +
     '<h2>' + esc(REQUEST_LETTER_HEADING) + '</h2>' +
     '<p>I, ' + esc(str(f, 'rl_name') || '____') + ', request an Equity Release Mortgage Facility of <b>GHS ' + esc(Number(str(f, 'rl_amount') || '0').toLocaleString('en-GB')) + '</b> under the Staff Equity Release Mortgage Program (6% fixed, term of up to 20 years, maximum/residual working life) for: <b>' + esc(str(f, 'rl_purpose')) + '</b>.</p>' +
     kv([['Property to be mortgaged', value(f.rl_property)], ['What the money will be used for', value(f.rl_use)]]) +
@@ -125,7 +130,7 @@ export function formHtml(id: FormId, product: ProductCode, f: FormValues): strin
 
 export const PRINT_CSS = `
 .mf-sheet{font-family:Segoe UI,Arial,sans-serif;color:#2B2927;font-size:13px;line-height:1.4;background:#fff;padding:24px;max-width:820px;margin:0 auto}
-.mf-sheet h1{font-size:20px;margin:0;color:#D95400;letter-spacing:.5px}.mf-sheet h2{font-size:17px;margin:2px 0 8px}
+.mf-sheet .brand{display:flex;align-items:center;gap:10px;margin:0 0 6px}.mf-sheet .brand img{display:block}.mf-sheet .brand span{font-size:20px;font-weight:700;font-style:italic;color:#D95400;letter-spacing:.5px}.mf-sheet h2{font-size:17px;margin:2px 0 8px}
 .mf-sheet h3{font-size:12px;letter-spacing:.6px;margin:16px 0 4px;background:#F1EFED;border-top:2px solid #F26A1B;padding:4px 8px}
 .mf-sheet table{width:100%;border-collapse:collapse;margin:0 0 6px}.mf-sheet th,.mf-sheet td{border:1px solid #D2CECA;padding:4px 7px;text-align:left;vertical-align:top;font-size:12px}
 .mf-sheet th{background:#F8F7F6;font-weight:600;width:34%}.mf-sheet .grid th{width:auto}.mf-sheet .small{font-size:11px;color:#55514E}
