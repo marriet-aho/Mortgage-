@@ -130,7 +130,7 @@ export function formHtml(id: FormId, product: ProductCode, f: FormValues): strin
 
 export const PRINT_CSS = `
 .mf-sheet{font-family:Segoe UI,Arial,sans-serif;color:#2B2927;font-size:13px;line-height:1.4;background:#fff;padding:24px;max-width:820px;margin:0 auto}
-.mf-sheet .brand{display:flex;align-items:center;gap:10px;margin:0 0 6px}.mf-sheet .brand img{display:block}.mf-sheet .brand span{font-size:20px;font-weight:700;font-style:italic;color:#D95400;letter-spacing:.5px}.mf-sheet h2{font-size:17px;margin:2px 0 8px}
+.mf-sheet .brand{float:right;display:flex;align-items:center;gap:10px;margin:0 0 6px 12px}.mf-sheet h3,.mf-sheet table.kv,.mf-sheet .clear{clear:both}.mf-sheet .brand img{display:block}.mf-sheet .brand span{font-size:20px;font-weight:700;font-style:italic;color:#D95400;letter-spacing:.5px}.mf-sheet h2{font-size:17px;margin:2px 0 8px}
 .mf-sheet h3{font-size:12px;letter-spacing:.6px;margin:16px 0 4px;background:#F1EFED;border-top:2px solid #F26A1B;padding:4px 8px}
 .mf-sheet table{width:100%;border-collapse:collapse;margin:0 0 6px}.mf-sheet th,.mf-sheet td{border:1px solid #D2CECA;padding:4px 7px;text-align:left;vertical-align:top;font-size:12px}
 .mf-sheet th{background:#F8F7F6;font-weight:600;width:34%}.mf-sheet .grid th{width:auto}.mf-sheet .small{font-size:11px;color:#55514E}
