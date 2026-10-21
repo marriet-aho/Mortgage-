@@ -26,6 +26,12 @@ Every question uses the label printed on the paper form. Each form is signed on 
 
 The printed copy also leaves out any answer that is empty.
 
+## Supporting documents and fees
+
+- **Documents:** each item on the bank's pre-approval list has its own upload (PDF, JPG or PNG, up to 10 MB). Spouse and private-vendor items appear when the person says they apply. Post-approval items (deed of indenture, insurance policies, registration receipt and so on) and "Other documents" can be uploaded too. Submit stays disabled until every required pre-approval document is in.
+- **Fees:** a fee reminder sits at the top of the pack, the documents page and each form, and the reminder at each step names the fee that applies (search Ghs 4,000, valuation Ghs 3,500 to 10,000, registration 1.85% of property value, insurance premiums). Before submitting, the person must acknowledge the full fee table.
+- **Files go to:** `Mortgage Forms/<person>/<product>/documents/<requirement>__<file name>`.
+
 ## Where it fits in Advance Flow
 
 ```
@@ -47,6 +53,8 @@ Staff journey:
 2. Complete and sign each form. Drafts save as they type.
 3. Save each form as a PDF. Send the **valuation form** to the Collateral Maintenance Unit. Mail the Land Title Certificate and Personalized site plan to the Mortgage Unit.
 4. In Advance Flow, **Create Staff Loan, Step 2**, attach the PDFs together with the rest of the pre-approval documents.
+
+To build it inside Advance Flow rather than SharePoint, see [docs/advance-flow-integration.md](docs/advance-flow-integration.md): the forms module needs only a host page and an Advance Flow API for forms and documents.
 
 Two ways to place it, from simplest:
 

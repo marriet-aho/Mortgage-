@@ -2,11 +2,15 @@ import * as React from 'react';
 import { AssetsSection, ConsentLetter, DeclarationSection, FormSection, ValuationSection, one } from './formSections';
 import { SignaturePad } from './signature';
 import { Button, Chip, Head, Note, Panel, Section } from './ui';
-import { FormValues, PRODUCT_LABEL, ProductCode, REQUEST_LETTER, STEPS, str } from './formDef';
+import { FormValues, PRODUCT_LABEL, ProductCode, REQUEST_LETTER, STEPS, numOf, str } from './formDef';
+import { DocsView, ctxOf, missingDocs } from './DocsView';
+import { docItems } from './docsDef';
+import { ghs, feeLines } from './fees';
+import { FeeAcknowledgement, FeeNote, FeeStrip } from './feeUi';
 import { FORM_TITLE, FormId, PRINT_CSS, formHtml, standalonePage } from './print';
 import { availableForms, formIssues } from './check';
 import { REQUIREMENTS } from './requirements';
-import { FormStore } from './store';
+import { FormStore, StoredDoc } from './store';
 import { injectStyles } from './styles';
 
 export interface FormsAppProps {
@@ -19,7 +23,7 @@ export interface FormsAppProps {
   navigate?: (url: string) => void;
 }
 
-type View = { kind: 'home' } | { kind: 'pack'; product: ProductCode } | { kind: 'form'; product: ProductCode; form: FormId } | { kind: 'preview'; product: ProductCode; form: FormId };
+type View = { kind: 'home' } | { kind: 'docs'; product: ProductCode } | { kind: 'pack'; product: ProductCode } | { kind: 'form'; product: ProductCode; form: FormId } | { kind: 'preview'; product: ProductCode; form: FormId };
 type Pack = { [form: string]: FormValues };
 
 const FORM_NOTE: { [k in FormId]: string } = {
@@ -47,6 +51,8 @@ export function FormsApp(p: FormsAppProps): JSX.Element {
   const [view, setView] = React.useState<View>({ kind: 'home' });
   const [pack, setPack] = React.useState<Pack>({});
   const [loading, setLoading] = React.useState(false);
+  const [docs, setDocs] = React.useState<StoredDoc[]>([]);
+  const [feeModal, setFeeModal] = React.useState(false);
   const [toast, setToast] = React.useState('');
   const [saved, setSaved] = React.useState('');
   const timer = React.useRef<number | undefined>(undefined);
@@ -55,14 +61,24 @@ export function FormsApp(p: FormsAppProps): JSX.Element {
   const open = function (product: ProductCode): void {
     setLoading(true);
     const ids = availableForms(product);
-    Promise.all(ids.map(function (id) { return p.store.load(product + '/' + id); })).then(function (loaded) {
+    Promise.all(ids.map(function (id) { return p.store.load(product + '/' + id); }).concat([p.store.load(product + '/documents')])).then(function (loaded) {
       const next: Pack = {};
       ids.forEach(function (id, i) { next[id] = loaded[i] || prefill(id, p.userName, p.userEmail, product); });
+      next.documents = loaded[ids.length] || {};
+      p.store.listDocs(product).then(setDocs, function () { setDocs([]); });
       setPack(next); setView({ kind: 'pack', product }); setLoading(false);
     }, function (e) { say(String(e)); setLoading(false); });
   };
 
-  const change = function (product: ProductCode, id: FormId, patch: FormValues): void {
+  const refreshDocs = function (product: ProductCode): void { p.store.listDocs(product).then(setDocs, function (e) { say(String(e)); }); };
+
+  /** The value the registration fee is worked out on: purchase price, or the property listed under assets. */
+  const propertyValue = function (product: ProductCode): number {
+    const a = pack.application || {};
+    return (product === 'HOME_PURCHASE' ? numOf(a, 'purchase_price') : numOf(a, 'asset0_v')) || numOf(pack.documents || {}, 'fee_property_value');
+  };
+
+  const change = function (product: ProductCode, id: string, patch: FormValues): void {
     setPack(function (cur) {
       const next = { ...cur[id], ...patch, _touched: true };
       const all = { ...cur, [id]: next };
@@ -84,8 +100,21 @@ export function FormsApp(p: FormsAppProps): JSX.Element {
   let body: JSX.Element;
   if (view.kind === 'home') {
     body = <Home onPick={open} loading={loading} advanceFlowUrl={p.advanceFlowUrl} />;
+  } else if (view.kind === 'docs') {
+    const dv = view.product;
+    const meta = pack.documents || {};
+    const signedMap: { [k: string]: boolean } = {};
+    availableForms(dv).forEach(function (id) { signedMap[id] = status(dv, id) === 'Signed'; });
+    body = (
+      <>
+        <FeeStrip product={dv} propertyValue={propertyValue(dv)} focus="search" message="Sending the title documents for a search costs Ghs 4,000. The valuation report costs Ghs 3,500 to 10,000." />
+        <DocsView product={dv} store={p.store} docs={docs} meta={meta} setMeta={function (patch) { change(dv, 'documents', patch); }} signed={signedMap}
+          refresh={function () { refreshDocs(dv); }} say={say} openForm={function (id) { setView({ kind: 'form', product: dv, form: id }); }} back={function () { setView({ kind: 'pack', product: dv }); }} />
+      </>
+    );
   } else if (view.kind === 'pack') {
     const pv = view.product;
+    const meta = pack.documents || {};
     const submit = function (): void {
       const ids = availableForms(pv);
       Promise.all(ids.map(function (id) { return p.store.publish(pv, FORM_TITLE[id].toLowerCase().replace(/[^a-z]+/g, '-') + '.html', standalonePage(FORM_TITLE[id], formHtml(id, pv, pack[id] || {}))); })).then(function () {
@@ -93,10 +122,22 @@ export function FormsApp(p: FormsAppProps): JSX.Element {
         window.setTimeout(function () { if (p.advanceFlowUrl) { (p.navigate || function (u: string) { window.location.href = u; })(p.advanceFlowUrl); } }, 1200);
       }, function (e) { say(String(e)); });
     };
-    body = <PackView product={pv} canSubmit={availableForms(pv).every(function (id) { return status(pv, id) === 'Signed'; })} onSubmit={submit} status={function (id) { return status(pv, id); }} go={function (id) { setView({ kind: 'form', product: view.product, form: id }); }} back={function () { setView({ kind: 'home' }); }} advanceFlowUrl={p.advanceFlowUrl} />;
+    const need = docItems(ctxOf(pv, meta)).filter(function (i) { return i.stage === 'pre' && !i.here && i.required; }).length;
+    const lacking = missingDocs(pv, meta, docs).length;
+    const formsDone = availableForms(pv).every(function (id) { return status(pv, id) === 'Signed'; });
+    body = (
+      <>
+        <PackView product={pv} canSubmit={formsDone && lacking === 0} blocker={!formsDone ? 'Complete and sign every form above to submit.' : lacking ? 'Upload the ' + lacking + ' missing required document(s) to submit.' : ''}
+          docsSummary={{ have: need - lacking, need }} onDocs={function () { setView({ kind: 'docs', product: pv }); }}
+          onSubmit={function () { setFeeModal(true); }} status={function (id) { return status(pv, id); }}
+          go={function (id) { setView({ kind: 'form', product: pv, form: id }); }} back={function () { setView({ kind: 'home' }); }} advanceFlowUrl={p.advanceFlowUrl}
+          fees={<FeeStrip product={pv} propertyValue={propertyValue(pv)} message="Keep these fees in mind: you pay the search and valuation fees as the process starts, and registration and insurance after approval." />} />
+        {feeModal ? <FeeAcknowledgement product={pv} propertyValue={propertyValue(pv)} onCancel={function () { setFeeModal(false); }} onConfirm={function () { setFeeModal(false); submit(); }} /> : null}
+      </>
+    );
   } else if (view.kind === 'form') {
     const v = view;
-    body = <FormPage product={v.product} id={v.form} f={pack[v.form] || {}} set={function (patch) { change(v.product, v.form, patch); }} saved={saved} signer={(str(pack[v.form] || {}, 'b_first_name') + ' ' + str(pack[v.form] || {}, 'b_last_name')).trim() || p.userName}
+    body = <FormPage fee={<FeeStrip product={v.product} propertyValue={propertyValue(v.product)} focus={v.form === 'valuation' ? 'valuation' : v.form === 'application' ? 'registration' : undefined} message={v.form === 'valuation' ? 'The valuation fee (Ghs 3,500 to 10,000) is debited to the account on this form.' : v.form === 'application' ? 'All fees are payable in advance and are not returnable once expended.' : v.form === 'request' ? 'The amount you request does not include the fees. You bear all fees and charges.' : undefined} />} product={v.product} id={v.form} f={pack[v.form] || {}} set={function (patch) { change(v.product, v.form, patch); }} saved={saved} signer={(str(pack[v.form] || {}, 'b_first_name') + ' ' + str(pack[v.form] || {}, 'b_last_name')).trim() || p.userName}
       back={function () { setView({ kind: 'pack', product: v.product }); }} preview={function () { setView({ kind: 'preview', product: v.product, form: v.form }); }} />;
   } else {
     const v = view;
@@ -135,10 +176,11 @@ function Where(p: { advanceFlowUrl?: string }): JSX.Element {
   return (
     <Panel title="Where this fits in Advance Flow">
       <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <li><b>Here:</b> fill in and e-sign the forms, then Print / Save as PDF.</li>
+        <li><b>Here:</b> fill in and e-sign the forms. Print / Save as PDF is available on each.</li>
         <li><b>Collateral Maintenance Unit:</b> send the signed valuation form.</li>
         <li><b>Mortgage Unit:</b> mail the Land Title Certificate and Personalized site plan for the search report.</li>
-        <li><b>Advance Flow, Staff Loan, Create Staff Loan:</b> Step 1 checks eligibility. <b>Step 2 is where you attach the pre-approval documents</b>, including the PDFs from this page.</li>
+        <li><b>Here:</b> upload the pre-approval documents next to each requirement, then submit.</li>
+        <li><b>Advance Flow, Staff Loan, Create Staff Loan:</b> finish your loan there. Step 1 checks your eligibility and Step 2 is the loan application.</li>
       </ol>
       {p.advanceFlowUrl ? <div style={{ marginTop: 10 }}><a className="mf-btn pri" href={p.advanceFlowUrl} target="_blank" rel="noreferrer">Open Advance Flow</a></div> : null}
     </Panel>
@@ -168,25 +210,27 @@ function Home(p: { onPick: (p: ProductCode) => void; loading: boolean; advanceFl
 
 /* ---------------- pack ---------------- */
 
-function PackView(p: { product: ProductCode; canSubmit: boolean; onSubmit: () => void; status: (id: FormId) => string; go: (id: FormId) => void; back: () => void; advanceFlowUrl?: string }): JSX.Element {
+function PackView(p: { product: ProductCode; canSubmit: boolean; blocker: string; docsSummary: { have: number; need: number }; onDocs: () => void; fees: JSX.Element; onSubmit: () => void; status: (id: FormId) => string; go: (id: FormId) => void; back: () => void; advanceFlowUrl?: string }): JSX.Element {
   const r = REQUIREMENTS[p.product];
   const ids = availableForms(p.product);
   const hereLabel = function (here?: string): JSX.Element | null { return here ? <Chip tone="orange">Done on this page</Chip> : null; };
   return (
     <>
       <Head title={PRODUCT_LABEL[p.product] + ' forms'} sub={r.terms} actions={<Button onClick={p.back}>All products</Button>} />
+      {p.fees}
       <Section title="Forms to complete and sign">
         <div className="mf-tw"><table className="mf-t"><thead><tr><th>Form</th><th>Status</th><th /></tr></thead><tbody>
           {ids.map(function (id) {
             const st = p.status(id);
             return <tr key={id}><td><b>{FORM_TITLE[id]}</b><div className="small muted">{FORM_NOTE[id]}</div></td><td><Chip tone={st === 'Signed' ? 'dark' : st === 'In progress' ? 'orange' : 'idle'}>{st}</Chip></td><td className="right"><Button primary={st !== 'Signed'} onClick={function () { p.go(id); }}>{st === 'Not started' ? 'Start' : st === 'Signed' ? 'Review' : 'Continue'}</Button></td></tr>;
           })}
+          <tr><td><b>Supporting documents</b><div className="small muted">Upload the documents on the bank’s requirements list next to each requirement, and any other documents that support your application.</div></td><td><Chip tone={p.docsSummary.have >= p.docsSummary.need ? 'dark' : p.docsSummary.have > 0 ? 'orange' : 'idle'}>{p.docsSummary.have} of {p.docsSummary.need} required</Chip></td><td className="right"><Button primary={p.docsSummary.have < p.docsSummary.need} onClick={p.onDocs}>Upload documents</Button></td></tr>
         </tbody></table></div>
       </Section>
       <Panel title="Submit">
         <div className="mf-row">
           <Button primary disabled={!p.canSubmit} onClick={p.onSubmit}>Submit and go to Advance Flow</Button>
-          <span className="small muted">{p.canSubmit ? 'Saves your signed forms, then opens Advance Flow, Create Staff Loan.' : 'Complete and sign every form above to submit.'}</span>
+          <span className="small muted">{p.canSubmit ? 'You will be shown the fees first. Then your signed forms are saved and Advance Flow, Create Staff Loan opens.' : p.blocker}</span>
         </div>
       </Panel>
       <div className="mf-grid2">
@@ -211,7 +255,7 @@ function PackView(p: { product: ProductCode; canSubmit: boolean; onSubmit: () =>
 
 /* ---------------- one form ---------------- */
 
-function FormPage(p: { product: ProductCode; id: FormId; f: FormValues; set: (patch: FormValues) => void; saved: string; signer: string; back: () => void; preview: () => void }): JSX.Element {
+function FormPage(p: { fee: JSX.Element; product: ProductCode; id: FormId; f: FormValues; set: (patch: FormValues) => void; saved: string; signer: string; back: () => void; preview: () => void }): JSX.Element {
   const [step, setStep] = React.useState(0);
   const [errs, setErrs] = React.useState<{ [k: string]: string }>({});
   const issues = formIssues(p.id, p.product, p.f);
@@ -253,14 +297,24 @@ function FormPage(p: { product: ProductCode; id: FormId; f: FormValues; set: (pa
     );
   }
 
+  const value = p.product === 'HOME_PURCHASE' ? numOf(p.f, 'purchase_price') : numOf(p.f, 'asset0_v');
+  const reg = feeLines(p.product, value)[2].min;
+  const prompt: JSX.Element | null =
+    p.id === 'application' && stepId === 'property' ? <FeeNote>The Mortgage Registration fee is 1.85% of the property value{value ? ': about ' + ghs(reg) + ' on ' + ghs(value) : ''}. You pay it after approval, when the Securities Unit advises the legal fees.</FeeNote>
+    : p.id === 'application' && stepId === 'declaration' ? <FeeNote>By signing you accept that all fees payable in advance are not returnable once expended, whether or not an offer is made.</FeeNote>
+    : p.id === 'valuation' ? <FeeNote>The valuation fee (Ghs 3,500 to 10,000) and all costs incidental to the valuation are debited to the account you enter below.</FeeNote>
+    : p.id === 'request' ? <FeeNote>You bear all fees and charges that arise in fulfilling this request: search (Ghs 4,000 where applicable), valuation, registration (1.85% of property value) and insurance.</FeeNote>
+    : null;
   return (
     <>
       <Head title={FORM_TITLE[p.id]} sub={PRODUCT_LABEL[p.product] + ' · ' + FORM_NOTE[p.id]} actions={<span className="small muted" aria-live="polite">{p.saved}</span>} />
+      {p.fee}
       {p.id === 'application' ? (
         <div className="mf-steps" aria-label="Steps">
           {STEPS.map(function (s, i) { return <button key={s.id} type="button" className={'mf-step' + (i === step ? ' on' : i < step ? ' done' : '')} onClick={function () { setStep(i); setErrs({}); }}>{i + 1}. {s.title}</button>; })}
         </div>
       ) : null}
+      {prompt}
       {content}
       <div className="mf-row" style={{ justifyContent: 'space-between' }}>
         <div className="mf-row">

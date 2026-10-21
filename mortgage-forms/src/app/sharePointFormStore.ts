@@ -1,6 +1,6 @@
 import { SPHttpClient } from '@microsoft/sp-http';
 import { FormValues } from './formDef';
-import { FormStore } from './store';
+import { FormStore, StoredDoc } from './store';
 
 /**
  * SharePoint Online document library. One folder per person and product, so the library's own permissions
@@ -28,7 +28,7 @@ export class SharePointFormStore implements FormStore {
     }
   }
 
-  private async put(sub: string, name: string, body: string): Promise<string> {
+  private async put(sub: string, name: string, body: string | File): Promise<string> {
     await this.ensureFolder(sub);
     const folder = this.folder(sub);
     const res = await this.http.post(
@@ -55,5 +55,30 @@ export class SharePointFormStore implements FormStore {
 
   public async publish(folder: string, fileName: string, html: string): Promise<string> {
     return this.put(folder, fileName, html);
+  }
+
+  /** Documents are stored as <requirement key>__<original name> so each requirement can be matched back. */
+  public async upload(product: string, key: string, file: File): Promise<StoredDoc> {
+    const clean = file.name.replace(/[#%&*:<>?/\\|"]/g, '_');
+    const url = await this.put(product + '/documents', key + '__' + clean, file);
+    return { key, name: clean, sizeKb: Math.max(1, Math.round(file.size / 1024)), at: new Date().toISOString(), url };
+  }
+
+  public async listDocs(product: string): Promise<StoredDoc[]> {
+    const folder = this.folder(product + '/documents');
+    const res = await this.http.get(this.webUrl + "/_api/web/GetFolderByServerRelativeUrl('" + folder.replace(/'/g, "''") + "')/Files?$select=Name,Length,TimeCreated,ServerRelativeUrl", SPHttpClient.configurations.v1, { headers: this.json });
+    if (res.status === 404) { return []; }
+    if (!res.ok) { throw new Error('Reading your documents failed (' + res.status + ').'); }
+    const rows = ((await res.json()) as { value: Array<{ Name: string; Length: string; TimeCreated: string; ServerRelativeUrl: string }> }).value;
+    return rows.filter(function (r) { return r.Name.indexOf('__') > 0; }).map(function (r) {
+      const i = r.Name.indexOf('__');
+      return { key: r.Name.slice(0, i), name: r.Name.slice(i + 2), sizeKb: Math.max(1, Math.round(Number(r.Length) / 1024)), at: r.TimeCreated, url: r.ServerRelativeUrl };
+    });
+  }
+
+  public async removeDoc(_product: string, doc: StoredDoc): Promise<void> {
+    if (!doc.url) { return; }
+    const res = await this.http.post(this.webUrl + "/_api/web/GetFileByServerRelativeUrl('" + doc.url.replace(/'/g, "''") + "')", SPHttpClient.configurations.v1, { headers: { ...this.json, 'IF-MATCH': '*', 'X-HTTP-Method': 'DELETE' } });
+    if (!res.ok) { throw new Error('Removing the file failed (' + res.status + ').'); }
   }
 }
