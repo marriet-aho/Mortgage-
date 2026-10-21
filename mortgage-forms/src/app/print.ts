@@ -7,7 +7,7 @@ import { FIDELITY_LOGO } from './logo';
 import { SignatureValue, parseSignature } from './signature';
 
 function brand(): string {
-  return '<div class="brand"><img src="' + FIDELITY_LOGO + '" alt="Fidelity Bank" width="44" height="44"><span>FIDELITY BANK</span></div>';
+  return '<div class="brand"><img src="' + FIDELITY_LOGO + '" alt="Fidelity Bank. Believe with us." width="200" height="52"></div>';
 }
 
 export type FormId = 'application' | 'consent' | 'valuation' | 'request';
