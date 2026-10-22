@@ -26,3 +26,9 @@ export function feeTotals(lines: FeeLine[]): { min: number; max: number } {
 }
 
 export function ghs(n: number): string { return 'Ghs ' + Math.round(n).toLocaleString('en-GB'); }
+
+/** How a fee is shown. Premiums are quoted by the insurer; registration needs the property value first. */
+export function feeAmount(l: FeeLine): string {
+  if (l.max === 0) { return l.key === 'registration' ? '1.85% of property value' : 'Quoted by insurer'; }
+  return l.min === l.max ? ghs(l.min) : ghs(l.min) + ' to ' + ghs(l.max);
+}

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ProductCode } from './formDef';
-import { feeLines, feeTotals, ghs } from './fees';
+import { feeAmount, feeLines, feeTotals, ghs } from './fees';
 import { Button, CheckField, Note } from './ui';
 
 /** Always-visible reminder of what the person will pay, with the line that matters at this step highlighted. */
@@ -26,7 +26,7 @@ export function FeeStrip(p: { product: ProductCode; propertyValue: number; focus
                 return (
                   <tr key={l.key} style={p.focus === l.key ? { background: '#fff', fontWeight: 600 } : undefined}>
                     <td>{i + 1}. {l.label}<div className="small muted">{l.basis}. {l.when}.</div></td>
-                    <td className="right num">{l.max === 0 ? 'Quoted by insurer' : l.min === l.max ? ghs(l.min) : ghs(l.min) + ' to ' + ghs(l.max)}</td>
+                    <td className="right num">{feeAmount(l)}</td>
                   </tr>
                 );
               })}
@@ -40,23 +40,24 @@ export function FeeStrip(p: { product: ProductCode; propertyValue: number; focus
 }
 
 /** Asks for explicit acknowledgement before the forms are submitted. */
-export function FeeAcknowledgement(p: { product: ProductCode; propertyValue: number; onCancel: () => void; onConfirm: () => void }): JSX.Element {
+export function FeeAcknowledgement(p: { product: ProductCode; propertyValue: number; mode?: 'start' | 'submit'; onCancel: () => void; onConfirm: () => void }): JSX.Element {
+  const start = p.mode === 'start';
   const [ok, setOk] = React.useState(false);
   const lines = feeLines(p.product, p.propertyValue);
   const t = feeTotals(lines);
   return (
     <div role="dialog" aria-modal="true" aria-label="Fees you will pay" style={{ position: 'fixed', inset: 0, background: 'rgba(43,41,39,.55)', display: 'grid', placeItems: 'center', zIndex: 60, padding: 16 }}>
       <div style={{ background: '#fff', borderRadius: 10, padding: 22, maxWidth: 560, width: '100%', maxHeight: '90vh', overflow: 'auto' }}>
-        <h2 style={{ margin: '0 0 6px', color: '#D95400' }}>Before you submit: the fees you will pay</h2>
-        <p style={{ margin: '0 0 10px' }}>These are the fees on the bank’s requirements sheet. You pay them as the process moves forward.</p>
+        <h2 style={{ margin: '0 0 6px', color: '#D95400' }}>{start ? 'Before you start: the fees you will pay' : 'Before you submit: the fees you will pay'}</h2>
+        <p style={{ margin: '0 0 10px' }}>{start ? 'The process starts with the valuation and the search, and both carry a fee. These are all the fees on the bank’s requirements sheet, and you pay them as the process moves forward.' : 'These are the fees on the bank’s requirements sheet. You pay them as the process moves forward.'}</p>
         <table className="mf-t" style={{ minWidth: 0 }}><tbody>
-          {lines.map(function (l, i) { return <tr key={l.key}><td>{i + 1}. {l.label}<div className="small muted">{l.when}</div></td><td className="right num">{l.max === 0 ? 'Quoted by insurer' : l.min === l.max ? ghs(l.min) : ghs(l.min) + ' to ' + ghs(l.max)}</td></tr>; })}
+          {lines.map(function (l, i) { return <tr key={l.key}><td>{i + 1}. {l.label}<div className="small muted">{l.when}</div></td><td className="right num">{feeAmount(l)}</td></tr>; })}
           <tr><td><b>Estimated total, before insurance</b></td><td className="right num"><b>{ghs(t.min)} to {ghs(t.max)}</b></td></tr>
         </tbody></table>
         <div style={{ margin: '12px 0' }}><CheckField id="f-fee-ack" label="I understand these fees are payable by me in advance and are not returnable once expended, whether or not an offer is made." checked={ok} onChange={setOk} /></div>
         <div className="mf-row" style={{ justifyContent: 'flex-end' }}>
-          <Button onClick={p.onCancel}>Cancel</Button>
-          <Button primary disabled={!ok} onClick={p.onConfirm}>Submit and go to Advance Flow</Button>
+          <Button onClick={p.onCancel}>{start ? 'Back' : 'Cancel'}</Button>
+          <Button primary disabled={!ok} onClick={p.onConfirm}>{start ? 'I understand, continue' : 'Submit and go to Advance Flow'}</Button>
         </div>
       </div>
     </div>

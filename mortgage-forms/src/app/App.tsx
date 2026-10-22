@@ -53,6 +53,8 @@ export function FormsApp(p: FormsAppProps): JSX.Element {
   const [loading, setLoading] = React.useState(false);
   const [docs, setDocs] = React.useState<StoredDoc[]>([]);
   const [feeModal, setFeeModal] = React.useState(false);
+  const [startFees, setStartFees] = React.useState<ProductCode | undefined>(undefined);
+  const [seenStart, setSeenStart] = React.useState<{ [k: string]: boolean }>({});
   const [toast, setToast] = React.useState('');
   const [saved, setSaved] = React.useState('');
   const timer = React.useRef<number | undefined>(undefined);
@@ -67,6 +69,7 @@ export function FormsApp(p: FormsAppProps): JSX.Element {
       next.documents = loaded[ids.length] || {};
       p.store.listDocs(product).then(setDocs, function () { setDocs([]); });
       setPack(next); setView({ kind: 'pack', product }); setLoading(false);
+      if (!seenStart[product]) { setStartFees(product); }
     }, function (e) { say(String(e)); setLoading(false); });
   };
 
@@ -164,6 +167,7 @@ export function FormsApp(p: FormsAppProps): JSX.Element {
     <div className="mf-root">
       <div className="mf-page mf-noprint-wrap">
         {body}
+        {startFees ? <FeeAcknowledgement mode="start" product={startFees} propertyValue={propertyValue(startFees)} onCancel={function () { setStartFees(undefined); setView({ kind: 'home' }); }} onConfirm={function () { setSeenStart({ ...seenStart, [startFees]: true }); setStartFees(undefined); }} /> : null}
         {toast ? <div role="status" style={{ position: 'fixed', right: 16, bottom: 16, background: '#2B2927', color: '#fff', padding: '10px 14px', borderRadius: 8, maxWidth: 420, zIndex: 50 }}>{toast}</div> : null}
       </div>
     </div>
